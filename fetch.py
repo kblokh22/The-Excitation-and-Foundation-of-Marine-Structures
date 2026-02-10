@@ -2,22 +2,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# 4. Calculate effective fetches in P2 (Fetchs.xlsx and Fetchs.jpg) using
-# Saville method (+/- 45 degrees);
+df = pd.read_csv("vejrdata/fetch_results.csv")
+direction = df['bearing_deg'].values # Given in degrees
+length = df['length_km'].values # Given in km
 
-df = pd.read_excel("ex1 data/fetchs.xlsx")
-df = df.iloc[2:]
-fetch = df['Unnamed: 2'].values
-direction = df['Unnamed: 3'].values
-direction = direction * np.pi / 180
+direction = direction * np.pi / 180 # Converting to radians
 direction = np.asarray(direction, dtype=float)
 
-fetch = np.append(fetch, fetch[0])
+length = np.append(length, length[0])
 direction = np.append(direction, direction[0])
 
+# Geographical Fetch
 plt.figure()
 ax = plt.subplot(1, 1, 1, projection='polar')
-ax.plot(direction, fetch)
+ax.plot(direction, length)
 ax.set_theta_direction(-1)
 ax.set_theta_offset(np.pi / 2.0)
 plt.title("Geographical Fetch")
@@ -29,11 +27,12 @@ eff_fetch = np.zeros(len(direction))
 for i in range(len(direction)):
 
     idx = [(i + j) % len(direction) for j in range(-9, 9 + 1)] # Use index plus and minus 9 to weight the 45 deg angles.
-    eff_fetch[i] = np.sum(fetch[idx] * np.cos(np.radians(direction[idx])) ** 2) / np.sum(np.cos(np.radians(direction[idx])))
+    eff_fetch[i] = np.sum(length[idx] * np.cos(np.radians(direction[idx])) ** 2) / np.sum(np.cos(np.radians(direction[idx])))
 
 eff_fetch = np.append(eff_fetch, eff_fetch[0])
 direction = np.append(direction, direction[0])
 
+# Effective Fetch
 plt.figure()
 ax = plt.subplot(1, 1, 1, projection='polar')
 ax.plot(direction, eff_fetch)
@@ -41,6 +40,9 @@ ax.set_theta_direction(-1)
 ax.set_theta_offset(np.pi / 2.0)
 plt.title("Effective Fetch")
 plt.show()
+
+# FROM EXERCISES
+# CAN MAYBE BE USED IN THE PROJECT
 
 df = pd.read_excel("ex1 data/U10.xlsx")
 date = df['Unnamed: 0'].values
