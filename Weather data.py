@@ -85,4 +85,9 @@ Tp  = np.full_like(U_A, np.nan)
 Hm0[valid] = (0.283*np.tanh( 0.53 * ( (g*h[valid])/(U_A[valid]**2) )**(3/4) )
               *np.tanh( (0.00565* ( g*SPM_fetch/(U_A[valid]**2) )**(1/2))/( np.tanh( 0.53*(g*h[valid]/(U_A[valid]**2))**(3/4) ) ) )
               *(U_A[valid]**2 /g))
-print(Hm0)
+print(f'The significant wave height is calculated as {Hm0}\n and the maximum value of HM0 is {np.max(Hm0[valid])}')
+
+Tp[valid] = (7.54*np.tanh( 0.833 * (g*h[valid]/U_A[valid]**2)**(3/8) )
+             *np.tanh((0.0379*(g*SPM_fetch/(U_A[valid]**2))**(1/3))/( np.tanh( 0.833*(g*h[valid]/(U_A[valid]**2))**(3/8) ) ))    )
+print(f'The wave period is calculated as {Tp}\n and the maximum value of Tp is {np.max(Tp[valid])}')
+
