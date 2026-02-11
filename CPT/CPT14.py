@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import io
 
-from matplotlib.pyplot import xlabel, ylabel
+from matplotlib.pyplot import xlabel, ylabel, legend
 
 data = """  0.00 -0.0001  0.0000  0.0000 -1.0360  0.2928 20.0000  1.0766 
    0.01  0.0909  0.0000  0.0408 -0.4730  0.9459 21.9500  1.0576 
@@ -302,6 +302,10 @@ data = """  0.00 -0.0001  0.0000  0.0000 -1.0360  0.2928 20.0000  1.0766
    2.94 24.6819  0.0000  0.0699 -2.0270  1.0360 182.1900  2.2764 
    2.95 26.0422  0.0000  0.0703 -2.0496  0.9685 182.8300  2.2668 """
 
+
+
+
+
 df = pd.read_csv(io.StringIO(data), sep=r"\s+", header=None)
 
 df.columns = ['m, penetration length', 'MPa, qc', 'MPa, fs', 'MPa, u2', 'degrees, i_y', 'degrees, i_x', 'Sec, SampleTime', 'degrees, i_res']
@@ -309,52 +313,69 @@ df.columns = ['m, penetration length', 'MPa, qc', 'MPa, fs', 'MPa, u2', 'degrees
 print(df)
 
 PD = df['m, penetration length']
-print(PD)
+#print(PD)
 QC = df['MPa, qc']
 U = df['MPa, u2']
 FS = df['MPa, fs']
-
+'''
 plt.figure()
 plt.plot(PD, QC)
 xlabel('m, penetration length')
 ylabel('q_c, MPa')
 #plt.show()
-
+'''
 # dette er i millimeter
 A_n = 1000
 A_c = 15000
 #a = A_n / A_c
 a = 0.8
-print('A value')
-print(a)
+#print('A value')
+#print(a)
 
 
-QT = QC + U *(1-a)
+QT = QC + U *(1-a) # korrigerede værdi vigtig i ler men knap så vigtig i sand
 print(QT)
 gamma_w = 10
 gamma_1 = 20 #update values
 N_kt = 15 #update values
-h_w = 8.5
+h_w = 8.5 #Dobble check value
 
-sigma_v0 = (PD * gamma_1 + gamma_w * h_w) * 0.01 # Using 0.01 to convert kPa til MPa
+sigma_v0 = (PD * gamma_1 + gamma_w * h_w) * 0.001 # Using 0.001 to convert kPa til MPa
 c_u = (QT - sigma_v0)/N_kt
 
 
-print(c_u)
-
+#print(c_u)
+'''
 plt.figure()
 plt.plot(PD, c_u)
 xlabel('m, penetration length')
 ylabel('c_u, MPa')
-plt.show()
+'''
+
+
+sigma_v0e = sigma_v0 - (PD * gamma_w * 0.001)
+help = QT/sigma_v0e
+
+phi_efective1_1 = np.atan(0.1+0.38*np.log10(help))
+phi_efective1 = phi_efective1_1 * 180/np.pi #Kulhawy and Mayne 1990
 
 p_a = 0.1
-phi_efective = 17.6 + 10*np.log10((QT/p_a)/np.sqrt(sigma_v0/p_a))
-print(phi_efective)
+phi_efective2 = 17.6 + 10*np.log10((QT/p_a)/np.sqrt(sigma_v0e/p_a)) #Kulhawy and Mayne 1990 for quartzsand
+
+'''
 plt.figure()
-plt.plot(PD, phi_efective)
+plt.plot(PD, QC)
+plt.plot(PD, QT)
+'''
+
+plt.figure()
+plt.plot(PD, phi_efective1, "b", label="PHI1")
+plt.plot(PD, phi_efective2,"r", label="PHI2")
+legend("12")
 xlabel('m, penetration length')
 ylabel('Friktions vinkel')
 plt.show()
+
+
 
 
