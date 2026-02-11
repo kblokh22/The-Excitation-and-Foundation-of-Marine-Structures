@@ -61,3 +61,7 @@ ax.set_theta_direction(-1)
 ax.set_theta_offset(np.pi / 2.0)
 plt.title("SPM Fetch")
 plt.show()
+
+
+print(f'Effective Fetch: \x1b[92m{np.max(eff_fetch)}\x1b[0m')
+print(f'SPM Fetch: \x1b[94m{np.max(SPM_fetch)}\x1b[0m')
