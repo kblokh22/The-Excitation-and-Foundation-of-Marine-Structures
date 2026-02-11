@@ -49,7 +49,18 @@ for dt in DeltaT:
         R_T.append(0.84)
     elif 7.5 <= dt < 10:
         R_T.append(0.83)
+    elif 10 <= dt < 12.5:
+        R_T.append(0.81)
+    elif 12.5 <= dt < 15:
+        R_T.append(0.80)
+    elif 15 <= dt < 17.5:
+        R_T.append(0.79)
+    elif 17.5 <= dt < 20:
+        R_T.append(0.78)
     else:
-        R_T.append(None)  # hvis værdien ikke matcher et interval
+        R_T.append(np.nan)
+R_T = np.array(R_T) #Convert R_T back to numbers.
 
+U_10=U_10*R_T
+print(U_10)
 
