@@ -332,11 +332,11 @@ print(a)
 QT = QC + U *(1-a)
 print(QT)
 gamma_w = 10
-gamma_1 = 20
-N_kt = 15
+gamma_1 = 20 #update values
+N_kt = 15 #update values
 h_w = 8.5
 
-sigma_v0 = (PD * gamma_1 + gamma_w * h_w) * 0.01 # bruger 0.01 til at convetere kPa til MPa
+sigma_v0 = (PD * gamma_1 + gamma_w * h_w) * 0.01 # Using 0.01 to convert kPa til MPa
 c_u = (QT - sigma_v0)/N_kt
 
 
