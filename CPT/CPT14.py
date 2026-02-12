@@ -353,7 +353,7 @@ ylabel('c_u, MPa')
 '''
 
 
-sigma_v0e = sigma_v0 - (PD * gamma_w * 0.001)
+sigma_v0e = sigma_v0 - U
 help = QT/sigma_v0e
 
 phi_efective1_1 = np.atan(0.1+0.38*np.log10(help))
@@ -371,7 +371,7 @@ plt.plot(PD, QT)
 plt.figure()
 plt.plot(PD, phi_efective1, "b", label="PHI1")
 plt.plot(PD, phi_efective2,"r", label="PHI2")
-legend("12")
+plt.figlegend(loc="upper center",ncol=5, labelspacing=0.)
 xlabel('m, penetration length')
 ylabel('Friktions vinkel')
 plt.show()
