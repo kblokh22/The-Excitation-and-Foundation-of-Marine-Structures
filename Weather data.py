@@ -10,18 +10,21 @@ windspeed=windspeed.astype(float)
 
 time=df.iloc[2:, 0].values
 
-z=15 #height of the measurement equipment of the wind
-U_z=windspeed
-U_10=U_z*(10/z)**(1/7)
 
+U_z=windspeed
+''' Assumed collected at 10m
+z=15 #height of the measurement equipment of the wind
+U_10=U_z*(10/z)**(1/7)
+'''
+U_10=U_z
 airtemp=df.iloc[2:, 5].values
 airtemp=airtemp.astype(float)
 seatemp=df.iloc[2:, 12].values
 seatemp=seatemp.astype(float)
 h=df.iloc[2:, 1].values
 h=h.astype(float)
-mwl=2 #mean water level reference
-h=h+mwl
+swl=7 #mean water level reference
+h=h+swl
 
 DeltaT=airtemp-seatemp
 DeltaT[DeltaT<-50]=np.nan #remove broken values
@@ -89,5 +92,10 @@ print(f'The significant wave height is calculated as {Hm0}\n and the maximum val
 
 Tp[valid] = (7.54*np.tanh( 0.833 * (g*h[valid]/U_A[valid]**2)**(3/8) )
              *np.tanh((0.0379*(g*SPM_fetch/(U_A[valid]**2))**(1/3))/( np.tanh( 0.833*(g*h[valid]/(U_A[valid]**2))**(3/8) ) ))    )
-print(f'The wave period is calculated as {Tp}\n and the maximum value of Tp is {np.max(Tp[valid])}')
 
+Hm0max=np.max(Hm0[valid])
+indices = np.where(Hm0 == Hm0max)[0]
+print("Maximum value of Hm0 occurs at array number:", indices)
+
+Tp_to_Hm0max=Tp[indices]
+print("The matching Tp for max value of Hm0 is",Tp_to_Hm0max)
