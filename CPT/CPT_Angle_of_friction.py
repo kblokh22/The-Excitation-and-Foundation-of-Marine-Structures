@@ -857,41 +857,25 @@ PD3 = df3['m, penetration length'].iloc[1:]
 PD14 = df14['m, penetration length'].iloc[1:]
 QC3 = df3['MPa, qc'].iloc[1:]
 QC14 = df14['MPa, qc'].iloc[1:]
-len('MPa, qc')
+
 
 
 gamma_w = 10
 gamma_1 = 20 #update values
+gamma_e = gamma_1 - gamma_w
 h_14_1 = PD14
 h_3_1 = PD3
+p_a = 0.1
 
-sigma_test1 = (gamma_1 * PD14 - gamma_w *PD14) * 0.001
-help_test1 = QC14/(30*sigma_test1)
-phi_e_test1 =  35+11.5*np.log10(29)
-print(sigma_test1)
-print(help_test1)
-print(phi_e_test1)
-
-#print(c_u)
-'''
-plt.figure()
-plt.plot(PD, c_u)
-xlabel('m, penetration length')
-ylabel('c_u, MPa')
-'''
 def frictionangel(h_3, h_14):
-    sigma_v0e_3 = (gamma_1 * h_3 - gamma_w * h_3) * 0.001
-    sigma_v0e_14 = (gamma_1 * h_14 - gamma_w * h_14) * 0.001
-#help3 = QC3/sigma_v0e_3
-#help14 = QC14/sigma_v0e_14
-#phi_efective3_1 = np.arctan(0.1+0.38*np.log10(help3))
-#phi_efective_3 = phi_efective3_1 * 180/np.pi #Kulhawy and Mayne 1990
-#phi_efective14_1 = np.arctan(0.1+0.38*np.log10(help14))
-#phi_efective_14 = phi_efective14_1 * 180/np.pi #Kulhawy and Mayne 1990
-    help3 = QC3/(30*sigma_v0e_3)
-    phi_efective_3 =  35+11.5*np.log10(help3)
-    help14 = QC14/(30*sigma_v0e_14)
-    phi_efective_14 =  35+11.5*np.log10(help14)  #Robertson and Campanella, 1983
+    sigma_v0e_3 = gamma_e * h_3 * 0.001
+    sigma_v0e_14 = gamma_e * h_14 * 0.001
+
+    phi_efective_3a = np.arctan(0.1+0.38*np.log10(QC3/sigma_v0e_3))
+    phi_efective_14a = np.arctan(0.1+0.38*np.log10(QC14/sigma_v0e_14))
+    phi_efective_3 = np.degrees(phi_efective_3a)
+    phi_efective_14 = np.degrees(phi_efective_14a)
+
     return (phi_efective_3, phi_efective_14)
 
 phi_e_3_1, phi_e_14_1 = frictionangel(h_3_1,h_14_1)
