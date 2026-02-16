@@ -34,16 +34,15 @@ dates = np.array(dates)
 water_levels = np.array(water_levels)
 mid_waves = np.array(mid_waves)
 max_waves = np.array(max_waves)
-max_waves[max_waves > 9] = np.nan
+mid_waves[mid_waves > 6] = np.nan
 
-indices_extreme = np.where(max_waves > 6)[0]
-
-H_extreme = max_waves[indices_extreme]
-dates_extreme = dates[indices_extreme]
+# Filter out NaN values in max waves
+mask = ~np.isnan(mid_waves)
+filtered_dates = dates[mask]
+filtered_max_waves = mid_waves[mask]
 
 plt.figure()
-plt.plot(dates, max_waves)
-plt.plot(dates_extreme, H_extreme, 'ro')
+plt.plot(filtered_dates, filtered_max_waves)
 plt.xlabel('Date')
 plt.ylabel('Significant wave height [m]')
 plt.title('Water level over time')
