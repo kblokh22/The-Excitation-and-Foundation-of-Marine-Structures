@@ -860,6 +860,7 @@ QC14 = df14['MPa, qc'].iloc[1:]
 
 
 
+
 gamma_w = 10
 gamma_1 = 20 #update values
 gamma_e = gamma_1 - gamma_w
@@ -867,14 +868,15 @@ h_14_1 = PD14
 h_3_1 = PD3
 p_a = 0.1
 
-def frictionangel(h_3, h_14):
-    sigma_v0e_3 = gamma_e * h_3 * 0.001
-    sigma_v0e_14 = gamma_e * h_14 * 0.001
 
-    phi_efective_3a = np.arctan(0.1+0.38*np.log10(QC3/sigma_v0e_3))
-    phi_efective_14a = np.arctan(0.1+0.38*np.log10(QC14/sigma_v0e_14))
+def frictionangel(h_3, h_14):
+    sigma_v0e_3 = gamma_e * h_3
+    sigma_v0e_14 = gamma_e * h_14
+
+    phi_efective_3a = np.arctan(0.1+0.38*np.log10((QC3*1000)/sigma_v0e_3))
+    phi_efective_14a = np.arctan(0.1+0.38*np.log10((QC14*1000)/sigma_v0e_14))
     phi_efective_3 = np.degrees(phi_efective_3a)
-    phi_efective_14 = np.degrees(phi_efective_14a)
+    phi_efective_14 = np.degrees(phi_efective_14a) # Robertson and Cabal 2012
 
     return (phi_efective_3, phi_efective_14)
 
