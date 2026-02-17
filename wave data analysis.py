@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.ndimage import label
+from scipy.ndimage import label, maximum_position
+from helper_functions import find_best_B
 
 years = np.arange(2013,2019)
 
@@ -34,16 +35,114 @@ dates = np.array(dates)
 water_levels = np.array(water_levels)
 mid_waves = np.array(mid_waves)
 max_waves = np.array(max_waves)
-mid_waves[mid_waves > 6] = np.nan
+
+mid_waves = np.where(max_waves > 8, np.nan, mid_waves)
 
 # Filter out NaN values in max waves
 mask = ~np.isnan(mid_waves)
 filtered_dates = dates[mask]
-filtered_max_waves = mid_waves[mask]
+filtered_waves = mid_waves[mask]
+
+# Find peaks in filtered waves
+mask = filtered_waves > 3.8
+labels, num_features = label(mask)
+peak_indices = maximum_position(filtered_waves, labels, range(1, num_features + 1))
+
+# Extract peak values
+peak_indices = [idx[0] for idx in peak_indices]
+peak_values = filtered_waves[peak_indices]
+peak_dates = filtered_dates[peak_indices]
+
+peak_values = np.delete(peak_values, [1, 2, 4])
+peak_dates = np.delete(peak_dates, [1, 2, 4])
 
 plt.figure()
-plt.plot(filtered_dates, filtered_max_waves)
+plt.plot(filtered_dates, filtered_waves)
+plt.plot(peak_dates, peak_values, 'ro')
 plt.xlabel('Date')
 plt.ylabel('Significant wave height [m]')
 plt.title('Water level over time')
 plt.show()
+
+for i in range(len(peak_dates)):
+    print(f"{peak_dates[i]} - {peak_values[i]} m")
+
+Hs = peak_values
+Date = pd.to_datetime(peak_dates, format='%Y-%m-%d %H:%M:%S')
+
+# LEAST SQUARE METHOD (LSM)
+
+k = np.linspace(1, 4, 500)
+Y, A, B, Hs_plot, relative_error = [], [], [], [], []
+
+for idx, k_lsm in enumerate(k):
+
+    Hs = np.flip(np.sort(Hs)) # The waves are sorted by height
+    n = len(Hs) # Number of data points
+    i = np.arange(1, n+1) # Rank of each data point
+
+
+    F = 1 - i / (n + 1) # Weibull plotting position formula
+
+    Y_lsm = (-np.log(1 - F))**(1/k_lsm) # Got new y for each data point
+
+    var = 1/n * np.sum((Y_lsm - np.mean(Y_lsm))**2)
+    cov = 1/n * np.sum((Y_lsm - np.mean(Y_lsm))*(Hs - np.mean(Hs)))
+
+    A_lsm = cov/var
+    B_lsm = np.mean(Hs) - A_lsm*np.mean(Y_lsm)
+
+    Hs_plot_lsm = A_lsm*Y_lsm + B_lsm
+    relative_error_lsm = (1/n) * np.sum(np.abs((Hs_plot_lsm - Hs) / Hs)) # E = (1/n) * Σ |(estimated - observed) / observed|
+
+    Y.append(Y_lsm)
+    A.append(A_lsm)
+    B.append(B_lsm)
+    Hs_plot.append(Hs_plot_lsm)
+    relative_error.append(relative_error_lsm)
+
+A = A[relative_error.index(min(relative_error))]
+B = B[relative_error.index(min(relative_error))]
+Y = Y[relative_error.index(min(relative_error))]
+Hs_plot = Hs_plot[relative_error.index(min(relative_error))]
+relative_error = relative_error[relative_error.index(min(relative_error))]
+
+plt.figure()
+plt.plot(Hs_plot, Y)
+plt.plot(Hs, Y, "ro")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("LEAST SQUARE METHOD")
+plt.show()
+
+print(f"For Least Square Method\n-----------------------\nA: {A:.2f}, B: {B:.2f}")
+print(f"Relative Error: {relative_error * 100:.2f}%")
+
+# MAXIMUM LIKELIHOOD METHOD (MLM)
+
+B_mlm, k_mlm, A_mlm, error_mlm = find_best_B(Hs, start_B=B)
+
+Y = (-np.log(1 - F))**(1/k_mlm)
+
+Hs_plot = A_mlm * Y + B_mlm
+
+plt.figure()
+plt.plot(Hs_plot, Y)
+plt.plot(Hs, Y, "ro")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("MAXIMUM LIKELIHOOD METHOD")
+plt.show()
+
+# Calculate Hs,50 and the expected maximum wave height
+
+# Define the sample intensity (number of extreme data / number of years of observation)
+
+lamb = len(Hs) / (Date.year.max() - Date.year.min())
+
+T = 50 # Return period
+F = 1 - 1 / (lamb * T)
+
+Hs_50 = A_mlm * (-np.log(1 - F))**(1/k_mlm) + B_mlm
+
+print(f"Expected maximum wave height: {Hs_50:.2f} m")
