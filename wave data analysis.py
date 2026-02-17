@@ -138,7 +138,7 @@ plt.show()
 
 # Define the sample intensity (number of extreme data / number of years of observation)
 
-lamb = len(Hs) / (Date.year.max() - Date.year.min())
+lamb = len(Hs) / ((Date.max() - Date.min()).days / 365.25)
 
 T = 50 # Return period
 F = 1 - 1 / (lamb * T)
