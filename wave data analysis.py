@@ -34,7 +34,8 @@ dates = np.array(dates)
 water_levels = np.array(water_levels)
 mid_waves = np.array(mid_waves)
 max_waves = np.array(max_waves)
-mid_waves[mid_waves > 6] = np.nan
+
+mid_waves = np.where(max_waves > 8, np.nan, mid_waves)
 
 # Filter out NaN values in max waves
 mask = ~np.isnan(mid_waves)
