@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import io
-
+import matplotlib.pyplot as plt
 
 raw_data = '''
   0.00  0.0005  0.0000  0.0000 -1.1036  0.5856 20.0000  1.2493 
@@ -543,7 +543,7 @@ raw_data = '''
 '''
 
 # Parameters
-GAMMA_SOIL = 0.02  # MN/m^3 (approx 18 kN/m3) times by 0.001 to go from kN to MN
+GAMMA_SOIL = 0.02  # MN/m^3 times by 0.001 to go from kN to MN (mellem 18-20 kN/m^3
 GAMMA_W = 0.01 # Water weight
 PA = 0.1  # Atmospheric pressure
 NET_QUOTIENT = 0.8  # net area ratio 'a' skal bruges til at regne korrigerede cone resisstance
@@ -563,7 +563,7 @@ def calculate_friction_angle(data_str):
     df = df.dropna(subset=['qc', 'depth'])
     df = df[df['qc'] > -9000].copy()
 
-    # korrigerede valuem
+    # korrigerede value of q as said before
     df['qt'] = df['qc'] + df['u2'] * (1 - NET_QUOTIENT)
     #effective stress
     df['sigma_v0'] = df['depth'] * (GAMMA_SOIL - GAMMA_W)
@@ -581,6 +581,7 @@ def calculate_friction_angle(data_str):
 
     return df
 
+
 #used to clean up code
 try:
     results = calculate_friction_angle(raw_data)
@@ -593,15 +594,22 @@ try:
     for _, row in results.iloc[::20].iterrows():
         print(f"{row['depth']:10.2f} | {row['qt']:10.2f} | {row['phi_degrees']:10.1f}")
 
-    avg_phi = results[results['depth'] > 0.0]['phi_degrees'].mean()
-    print(f"\nAverage Peak Friction Angle (>0.001m): {avg_phi:.2f}°")
+    avg_phi_3 = results[results['depth'] > 0.0]['phi_degrees'].mean()
+    print(f"\nAverage Peak Friction Angle (>0.001m): {avg_phi_3:.2f}°")
 
     var_phi = results[results['depth'] > 0.0]['phi_degrees'].var()
     spread_phi = np.sqrt(var_phi)
 
     print(f"\nspread Friction Angle (>0.0001m): {spread_phi:.2f}")
+    # making a graf to easylier show the chance in friction angle
+    plt.figure()
+    plt.plot(results['depth'],results['phi_degrees'],'o' )
+    plt.xlabel("Depth (m)")
+    plt.ylabel("Peak Friction Angle (deg)")
+    plt.show()
 
 except Exception as e:
     print(f"Error processing data: {e}")
+
 
 
