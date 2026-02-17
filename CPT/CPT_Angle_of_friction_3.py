@@ -546,7 +546,8 @@ raw_data = '''
 GAMMA_SOIL = 0.02  # MN/m^3 (approx 18 kN/m3) times by 0.001 to go from kN to MN
 GAMMA_W = 0.01 # Water weight
 PA = 0.1  # Atmospheric pressure
-NET_QUOTIENT = 0.8  # net area ratio 'a'
+NET_QUOTIENT = 0.8  # net area ratio 'a' skal bruges til at regne korrigerede cone resisstance
+#vigtigs i ler
 
 
 def calculate_friction_angle(data_str):
@@ -554,40 +555,41 @@ def calculate_friction_angle(data_str):
                      names=['depth', 'qc', 'fs', 'u2', 'iy', 'ix', 'time', 'ires'],
                      engine='python')
 
-    # Convert from collums to numeric
+    # Convert from collums to numeriske tal
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # Removes any rows which fail to convert or NAN
+    # Removes any rows which fail to convert eller NAN
     df = df.dropna(subset=['qc', 'depth'])
     df = df[df['qc'] > -9000].copy()
 
-    # korrigerede value
+    # korrigerede valuem
     df['qt'] = df['qc'] + df['u2'] * (1 - NET_QUOTIENT)
-
-    # Calculate effective stress
+    #effective stress
     df['sigma_v0'] = df['depth'] * (GAMMA_SOIL - GAMMA_W)
 
     # Removes errors when 0
     df = df[df['sigma_v0'] > 0.0001].copy()
 
-    # Benytter Mayne theory
+    # Benytter Mayne 2007 theory
     # phi' = 17.6 + 11 * log10( (qt/Pa) / sqrt(sigma_v0/Pa) )
     QT1 = (df['qt'] / PA) / np.sqrt(df['sigma_v0'] / PA)
 
-    # Ensure the term inside log10 is positive
+    # Log10 is log / ellers hvis man skriver log = ln
     df = df[QT1 > 0].copy()
     df['phi_degrees'] = 17.6 + 11.0 * np.log10(QT1)
 
     return df
 
-
+#used to clean up code
 try:
     results = calculate_friction_angle(raw_data)
 
+    #is my header
     print(f"{'Depth [m]':>10} | {'qt [MPa]':>10} | {'Phi [deg]':>10}")
     print("-" * 38)
 
+    #værdien inde i iloc beskiver hvor mange værdier den printer
     for _, row in results.iloc[::20].iterrows():
         print(f"{row['depth']:10.2f} | {row['qt']:10.2f} | {row['phi_degrees']:10.1f}")
 
