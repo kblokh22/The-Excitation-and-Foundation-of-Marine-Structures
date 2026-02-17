@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import io
-
+import matplotlib.pyplot as plt
 
 raw_data = """
    0.00 -0.0001  0.0000  0.0000 -1.0360  0.2928 20.0000  1.0766 
@@ -304,10 +304,10 @@ raw_data = """
 """
 
 # Parameters
-GAMMA_SOIL = 0.02  # MN/m^3 (approx 18 kN/m3) times by 0.001 to go from kN to MN
-GAMMA_W = 0.01 # Water weight
-PA = 0.1  # Atmospheric pressure
-NET_QUOTIENT = 0.8  # net area ratio 'a'
+GAMMA_SOIL = 0.02
+GAMMA_W = 0.01
+PA = 0.1
+NET_QUOTIENT = 0.8
 
 
 def calculate_friction_angle(data_str):
@@ -315,28 +315,22 @@ def calculate_friction_angle(data_str):
                      names=['depth', 'qc', 'fs', 'u2', 'iy', 'ix', 'time', 'ires'],
                      engine='python')
 
-    # Convert from collums to numeric
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # Removes any rows which fail to convert or NAN
     df = df.dropna(subset=['qc', 'depth'])
     df = df[df['qc'] > -9000].copy()
 
-    # korrigerede value
     df['qt'] = df['qc'] + df['u2'] * (1 - NET_QUOTIENT)
 
-    # Calculate effective stress
     df['sigma_v0'] = df['depth'] * (GAMMA_SOIL - GAMMA_W)
 
-    # Removes errors when 0
     df = df[df['sigma_v0'] > 0.0001].copy()
 
-    # Benytter Mayne theory
+
     # phi' = 17.6 + 11 * log10( (qt/Pa) / sqrt(sigma_v0/Pa) )
     QT1 = (df['qt'] / PA) / np.sqrt(df['sigma_v0'] / PA)
 
-    # Ensure the term inside log10 is positive
     df = df[QT1 > 0].copy()
     df['phi_degrees'] = 17.6 + 11.0 * np.log10(QT1)
 
@@ -352,19 +346,23 @@ try:
     for _, row in results.iloc[::20].iterrows():
         print(f"{row['depth']:10.2f} | {row['qt']:10.2f} | {row['phi_degrees']:10.1f}")
 
-    avg_phi = results[results['depth'] > 0.0]['phi_degrees'].mean()
-    print(f"\nAverage Peak Friction Angle (>0.001m): {avg_phi:.2f}°")
+    avg_phi_14 = results[results['depth'] > 0.0]['phi_degrees'].mean()
+    print(f"\nAverage Peak Friction Angle (>0.001m): {avg_phi_14:.2f}°")
 
     var_phi = results[results['depth'] > 0.0]['phi_degrees'].var()
     spread_phi = np.sqrt(var_phi)
 
     print(f"\nspread Friction Angle (>0.0001m): {spread_phi:.2f}")
+    #making a graf to easylier show the chance in friction angle
+    plt.figure()
+    plt.plot(results['depth'], results['phi_degrees'],'o')
+    plt.xlabel("Depth (m)")
+    plt.ylabel("Peak Friction Angle (deg)")
+    plt.show()
+
 
 except Exception as e:
     print(f"Error processing data: {e}")
-
-
-
 
 
 
