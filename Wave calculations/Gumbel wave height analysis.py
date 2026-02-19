@@ -3,7 +3,7 @@ import numpy as np
 from scipy import stats
 
 # 1. Define the local path to your file
-file_path = "Weather data/Vejrdata 2018-2025.xlsx"
+file_path = "../Weather data/Vejrdata 2018-2025.xlsx"
 
 try:
     # 2. Load the data – use file_path

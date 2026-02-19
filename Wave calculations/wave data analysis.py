@@ -64,8 +64,10 @@ plt.ylabel('Significant wave height [m]')
 plt.title('Water level over time')
 plt.show()
 
+print(f"-----------------------\nSignificant wave heights:")
 for i in range(len(peak_dates)):
     print(f"{peak_dates[i]} - {peak_values[i]} m")
+print("-----------------------\n")
 
 Hs = peak_values
 Date = pd.to_datetime(peak_dates, format='%Y-%m-%d %H:%M:%S')
@@ -104,6 +106,7 @@ for idx, k_lsm in enumerate(k):
 A = A[relative_error.index(min(relative_error))]
 B = B[relative_error.index(min(relative_error))]
 Y = Y[relative_error.index(min(relative_error))]
+k_lsm = k[relative_error.index(min(relative_error))]
 Hs_plot = Hs_plot[relative_error.index(min(relative_error))]
 relative_error = relative_error[relative_error.index(min(relative_error))]
 
@@ -116,7 +119,7 @@ plt.title("LEAST SQUARE METHOD")
 plt.show()
 
 print(f"For Least Square Method\n-----------------------\nA: {A:.2f}, B: {B:.2f}")
-print(f"Relative Error: {relative_error * 100:.2f}%")
+print(f"Relative Error: {relative_error * 100:.2f}%\n")
 
 # MAXIMUM LIKELIHOOD METHOD (MLM)
 
@@ -134,6 +137,9 @@ plt.ylabel("y")
 plt.title("MAXIMUM LIKELIHOOD METHOD")
 plt.show()
 
+print(f"For Maximum Likelihood Method\n-----------------------------\nA: {A_mlm:.2f}, B: {B_mlm:.2f}, k: {k_mlm:.2f}")
+print(f"Relative Error: {error_mlm:.2f}%\n")
+
 # Calculate Hs,50 and the expected maximum wave height
 
 # Define the sample intensity (number of extreme data / number of years of observation)
@@ -144,5 +150,7 @@ T = 50 # Return period
 F = 1 - 1 / (lamb * T)
 
 Hs_50 = A_mlm * (-np.log(1 - F))**(1/k_mlm) + B_mlm
+Hs_50_LSM = A * (-np.log(1 - F))**(1/k_lsm) + B
 
-print(f"Expected maximum wave height: {Hs_50:.2f} m")
+print(f"Expected maximum wave height using MLM: {Hs_50:.2f} m")
+print(f"Expected maximum wave height using LSM: {Hs_50_LSM:.2f} m")
