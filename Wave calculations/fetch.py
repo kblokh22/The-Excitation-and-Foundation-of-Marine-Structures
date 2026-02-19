@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-df = pd.read_csv("../Weather data/fetch_results.csv")
+df = pd.read_csv("Weather data/fetch_results.csv")
 direction = df['bearing_deg'].values # Given in degrees in 3 deg intervals
 length = df['length_km'].values # Given in km
 
@@ -63,5 +63,5 @@ plt.title("SPM Fetch")
 plt.show()
 
 
-print(f'Effective Fetch: \x1b[92m{np.max(eff_fetch)}\x1b[0m')
-print(f'SPM Fetch: \x1b[94m{np.max(SPM_fetch)}\x1b[0m')
+print(f'Effective Fetch: \x1b[92m{np.max(eff_fetch):.1f}\x1b[0m')
+print(f'SPM Fetch: \x1b[94m{np.max(SPM_fetch):.1f}\x1b[0m')

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.ndimage import label, maximum_position
-from helper_functions import find_best_B
+from scipy.stats import weibull_min
 
 years = np.arange(2013,2019)
 
@@ -123,11 +123,14 @@ print(f"Relative Error: {relative_error * 100:.2f}%\n")
 
 # MAXIMUM LIKELIHOOD METHOD (MLM)
 
-B_mlm, k_mlm, A_mlm, error_mlm = find_best_B(Hs, start_B=B)
+k_mlm, B_mlm, A_mlm = weibull_min.fit(Hs)
 
 Y = (-np.log(1 - F))**(1/k_mlm)
 
 Hs_plot = A_mlm * Y + B_mlm
+
+n = len(Hs)
+error_mlm = (1 / n) * np.sum(np.abs((Hs_plot - Hs) / Hs))
 
 plt.figure()
 plt.plot(Hs_plot, Y)
