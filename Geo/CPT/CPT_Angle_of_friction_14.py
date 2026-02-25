@@ -406,10 +406,10 @@ df.loc[valid_mask, 'phi_peak'] = 17.6 + 11.0 * np.log10(
     np.sqrt(df.loc[valid_mask, sv_col] / p_a)
 )
 
-avg_phi_per_layer = df.groupby('Layer_ID')['phi_peak'].mean()
+avg_phi_per_layer14 = df.groupby('Layer_ID')['phi_peak'].mean()
 
 print("Average Peak Friction Angle per Layer:")
-print(avg_phi_per_layer)
+print(avg_phi_per_layer14)
 df['gamma2'] = df['gamma']*1000
 
 #AI plots
