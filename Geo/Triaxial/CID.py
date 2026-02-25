@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-B = ["B8 805a","B14 1423a", "B8 881a", "B4 430a", "B8 829a"]
+B = ["B8 805a ","B14 1423a", "B8 881a ", "B4 430a ", "B8 829a "]
 depth = ["22,0 - 22,5 m", "20,0 - 20,5 m", "25,0 - 25,6 m",  "32,0 - 32,6 m", "34,0 - 34,6 m"]
 
 q_tp = np.array([766, 1141, 489, 881, 793 ])
@@ -27,6 +27,16 @@ phi_cs = np.arcsin((sigma_1cs-sigma_3cs)/(sigma_1cs+sigma_3cs))
 phi_cs = np.degrees(phi_cs)
 
 alpha_p = phi_p - phi_cs
+
+
+tau_p = q_p/2
+tau_cs = q_cs/2
+
+
+
+
+
+
 
 
 df = pd.DataFrame()
