@@ -594,12 +594,12 @@ df['Q_t'] = (df['q_t']-df['sigma_v0'])/df['sigma_v0_e']
 df['F_r'] = df['ft']/(df['q_t']-df['sigma_v0'])*100
 
 
-diffU = (df['Pore_Smooth']-gamma_w*df['Depth_m'])*0.001
+diffU = (df['Pore_Smooth']-gamma_w*df['Depth_m'])
 df['B_q'] = diffU/(df['q_t']-df['sigma_v0'])
 
-print(df[['Q_t','F_r','B_q']])
+print(df[['Q_t','F_r','B_q','gamma']])
 
-p_a = 0.1
+p_a = 100
 Q_t1 = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
 
 

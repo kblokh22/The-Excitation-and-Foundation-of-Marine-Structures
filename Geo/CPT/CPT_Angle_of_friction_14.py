@@ -339,15 +339,15 @@ labels = [0,1,2,4,5]
 df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=True)
 
 
-df['gamma'] = 26 - 14/(1+(0.5*np.log(df['ft_Smooth']))**2)
+df['gamma'] = (26 - 14/(1+(0.5*np.log(df['ft_Smooth']))**2))*0.001
 
 
 
 #regne afsnit
-gamma_w = 10
+gamma_w = 0.01
 df['q_t'] = df['Tip_Smooth'] + df['Pore_Smooth']*(1-a)
-df['sigma_v0'] = df['Depth_m'] * df['gamma']*0.001
-df['sigma_v0_e'] = df['Depth_m'] * (df['gamma']-gamma_w)*0.001
+df['sigma_v0'] = df['Depth_m'] * df['gamma']
+df['sigma_v0_e'] = df['Depth_m'] * (df['gamma']-gamma_w)
 
 df['Q_t'] = (df['q_t']-df['sigma_v0'])/df['sigma_v0_e']
 
@@ -355,13 +355,14 @@ df['Q_t'] = (df['q_t']-df['sigma_v0'])/df['sigma_v0_e']
 df['F_r'] = df['ft']/(df['q_t']-df['sigma_v0'])*100
 
 
-diffU = (df['Pore_Smooth']-gamma_w*df['Depth_m'])*0.001
+diffU = (df['Pore_Smooth']-gamma_w*df['Depth_m'])
 df['B_q'] = diffU/(df['q_t']-df['sigma_v0'])
 
-print(df[['Q_t','F_r','B_q']])
+print(df[['Q_t','F_r','B_q','gamma']])
 
-p_a = 0.1
+p_a = 100
 Q_t1 = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
+
 
 df['I_c'] = np.sqrt((3.47-np.log(Q_t1))**2+(np.log(df['F_r']+1.22))**2)
 
@@ -409,6 +410,7 @@ avg_phi_per_layer = df.groupby('Layer_ID')['phi_peak'].mean()
 
 print("Average Peak Friction Angle per Layer:")
 print(avg_phi_per_layer)
+
 
 #AI plots
 from matplotlib.colors import ListedColormap
