@@ -649,7 +649,7 @@ avg_phi_per_layer = df.groupby('Layer_ID')['phi_peak'].mean()
 
 print("Average Peak Friction Angle per Layer:")
 print(avg_phi_per_layer)
-
+df['gamma2'] = df['gamma']*1000
 
 #AI plots
 from matplotlib.colors import ListedColormap
@@ -657,52 +657,72 @@ num_colors = len(labels)
 base_cmap = plt.get_cmap('tab10')
 custom_cmap = ListedColormap(base_cmap.colors[:num_colors])
 
-# 1. Setup the figure
-plt.figure(figsize=(6, 10))
-# 2. Define your colors to match the number of layers
-# Using a colormap like 'tab10' for distinct layer colors
-colors = plt.cm.tab10(range(len(df['Layer_ID'])))
-# 3. Loop through each layer and plot its segment
-for layer_id in sorted(df['Layer_ID'].unique()):
-    # Filter data for the current layer
+# 1. Create a figure with 3 subplots (1 row, 3 columns)
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(15, 10), sharey=True)
+# Define distinct colors for the layers
+unique_layers = sorted(df['Layer_ID'].unique())
+colors = plt.cm.tab10(range(len(unique_layers)))
+for i, layer_id in enumerate(unique_layers):
     layer_data = df[df['Layer_ID'] == layer_id]
     if not layer_data.empty:
-        # Plot Qt on X and Depth on Y
-        plt.plot(layer_data['Tip_Smooth'], layer_data['Depth_m'],
-                 label=f'Layer {layer_id}',
-                 color=colors[int(layer_id)],
-                 linewidth=2)
-# 4. Standard CPT Plot Formatting
-plt.gca().invert_yaxis()  # Depth usually goes from 0 down to max
-plt.xlabel('Cone Resistance $q_t$ [MPa]')
-plt.ylabel('Depth [m]')
-plt.grid(True, which="both", ls="-", alpha=0.5)
-plt.legend(title="Soil Layers")
+        # Subplot 1: Tip Resistance (qt)
+        ax1.plot(layer_data['Tip_Smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2, label=f'Layer {layer_id}')
+        # Subplot 2: Sleeve Friction (ft)
+        ax2.plot(layer_data['ft_Smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        # Subplot 3: Pore Pressure (u)
+        ax3.plot(layer_data['Pore_Smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        ax4.plot(layer_data['gamma2'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+ax1.invert_yaxis()
+# Labels and Titles
+ax1.set_xlabel('Tip Resistance $q_t$ [MPa]')
+ax1.set_ylabel('Depth [m]')
+ax1.set_title('Cone Resistance')
+ax2.set_xlabel('Sleeve Friction $f_t$ [MPa]')
+ax2.set_title('Sleeve Friction')
+ax3.set_xlabel('Pore Pressure $u$ [MPa]')
+ax3.set_title('Pore Pressure')
+ax4.set_xlabel('Specific weight $gamma_t$ [kN/m^2')
+ax4.set_title('Specific Weight')
+# Add Grid and Legend
+for ax in [ax1, ax2, ax3, ax4]:
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+ax1.legend(title="Soil Layers", loc='lower left')
+plt.tight_layout()
 plt.show()
 
 
 
-# 1. Setup the figure
-plt.figure(figsize=(6, 10))
-# 2. Define your colors to match the number of layers
-# Using a colormap like 'tab10' for distinct layer colors
-colors = plt.cm.tab10(range(len(df['Layer_ID'])))
-# 3. Loop through each layer and plot its segment
-for layer_id in sorted(df['Layer_ID'].unique()):
-    # Filter data for the current layer
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 10), sharey=True)
+# Define distinct colors for the layers
+unique_layers = sorted(df['Layer_ID'].unique())
+colors = plt.cm.tab10(range(len(unique_layers)))
+for i, layer_id in enumerate(unique_layers):
     layer_data = df[df['Layer_ID'] == layer_id]
     if not layer_data.empty:
-        # Plot Qt on X and Depth on Y
-        plt.plot(layer_data['Q_t'], layer_data['Depth_m'],
-                 label=f'Layer {layer_id}',
-                 color=colors[int(layer_id)],
-                 linewidth=2)
-# 4. Standard CPT Plot Formatting
-plt.gca().invert_yaxis()  # Depth usually goes from 0 down to max
-plt.xlabel('Normalized cone Resistance $Q_t$ [MPa]')
-plt.ylabel('Depth [m]')
-plt.grid(True, which="both", ls="-", alpha=0.5)
-plt.legend(title="Soil Layers")
+        ax1.plot(layer_data['Q_t'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2, label=f'Layer {layer_id}')
+        ax2.plot(layer_data['F_r'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        ax3.plot(layer_data['B_q'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+ax1.invert_yaxis()
+# Labels and Titles
+ax1.set_xlabel('Normalized Cone Resistance $Q_t$ [-]')
+ax1.set_ylabel('Depth [m]')
+ax1.set_title('Normalized Cone Resistance')
+ax2.set_xlabel('Friction ratio $F_r$ [-]')
+ax2.set_title('Friction ratio')
+ax3.set_xlabel('Pore Pressure Ratio $B_q$ [-]')
+ax3.set_title('Pore Pressure Ratio')
+# Add Grid and Legend
+for ax in [ax1, ax2, ax3]:
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+ax1.legend(title="Soil Layers", loc='lower left')
+plt.tight_layout()
 plt.show()
 
 
@@ -751,7 +771,7 @@ plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.yscale('log')
 plt.ylim(1, 10000)
 plt.xlim(-0.5, 1)
-plt.xlabel('Friction Ratio $B_q$ [-]')
+plt.xlabel('Pore Pressure Ratio $B_q$ [-]')
 plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
 plt.show()
 
