@@ -302,67 +302,251 @@ raw_data = """
    2.95 26.0422  0.0000  0.0703 -2.0496  0.9685 182.8300  2.2668 
 
 """
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 
-# Parameters
-GAMMA_SOIL = 0.02
-GAMMA_W = 0.01
-PA = 0.1
-NET_QUOTIENT = 0.8
-
-
-def calculate_friction_angle(data_str):
-    df = pd.read_csv(io.StringIO(data_str.strip()), sep=r'\s+', header=None,
-                     names=['depth', 'qc', 'fs', 'u2', 'iy', 'ix', 'time', 'ires'],
+df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
+                     names=['Depth_m', 'Tip_MPa', 'Sleeve_MPa', 'Pore_MPa','I_x','I_y','Time_Stamp','I_res'],
                      engine='python')
 
-    for col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-
-    df = df.dropna(subset=['qc', 'depth'])
-    df = df[df['qc'] > -9000].copy()
-
-    df['qt'] = df['qc'] + df['u2'] * (1 - NET_QUOTIENT)
-
-    df['sigma_v0'] = df['depth'] * (GAMMA_SOIL - GAMMA_W)
-
-    df = df[df['sigma_v0'] > 0.0001].copy()
 
 
-    # phi' = 17.6 + 11 * log10( (qt/Pa) / sqrt(sigma_v0/Pa) )
-    QT1 = (df['qt'] / PA) / np.sqrt(df['sigma_v0'] / PA)
-
-    df = df[QT1 > 0].copy()
-    df['phi_degrees'] = 17.6 + 11.0 * np.log10(QT1)
-
-    return df
-
-
-try:
-    results = calculate_friction_angle(raw_data)
-
-    print(f"{'Depth [m]':>10} | {'qt [MPa]':>10} | {'Phi [deg]':>10}")
-    print("-" * 38)
-
-    for _, row in results.iloc[::20].iterrows():
-        print(f"{row['depth']:10.2f} | {row['qt']:10.2f} | {row['phi_degrees']:10.1f}")
-
-    avg_phi_14 = results[results['depth'] > 0.0]['phi_degrees'].mean()
-    print(f"\nAverage Peak Friction Angle (>0.001m): {avg_phi_14:.2f}°")
-
-    var_phi = results[results['depth'] > 0.0]['phi_degrees'].var()
-    spread_phi = np.sqrt(var_phi)
-
-    print(f"\nspread Friction Angle (>0.0001m): {spread_phi:.2f}")
-    #making a graf to easylier show the chance in friction angle
-    plt.figure()
-    plt.plot(results['depth'], results['phi_degrees'],'o')
-    plt.xlabel("Depth (m)")
-    plt.ylabel("Peak Friction Angle (deg)")
-    plt.show()
-
-
-except Exception as e:
-    print(f"Error processing data: {e}")
+a = 0.8
+#A_n = 0
+#A_c = 0
+# a = A_n/A_c
 
 
 
+Asb = 0.015
+Ast = 0.010
+As = 150.0
+
+if 'u3' in df.columns:
+    df['ft'] = df['Sleeve_MPa'] - ((df['Pore_MPa'] * Asb - df['u3'] * Ast) / As)
+else:
+    df['ft'] = df['Sleeve_MPa']
+
+df['Tip_Smooth'] = df['Tip_MPa'].rolling(window=5,center=True).mean()
+df['ft_Smooth'] = df['ft'].rolling(window=5, center=True).mean()
+df['Pore_Smooth'] = df['Pore_MPa'].rolling(window=5, center=True).mean()
+
+
+bins = [ 0,0.6,1.6,2.2,2.6,3]
+labels = [0,1,2,4,5]
+
+df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=True)
+
+
+df['gamma'] = (26 - 14/(1+(0.5*np.log(df['ft_Smooth']))**2))*0.001
+
+
+
+#regne afsnit
+gamma_w = 0.01
+df['q_t'] = df['Tip_Smooth'] + df['Pore_Smooth']*(1-a)
+df['sigma_v0'] = df['Depth_m'] * df['gamma']
+df['sigma_v0_e'] = df['Depth_m'] * (df['gamma']-gamma_w)
+
+df['Q_t'] = (df['q_t']-df['sigma_v0'])/df['sigma_v0_e']
+
+
+df['F_r'] = df['ft']/(df['q_t']-df['sigma_v0'])*100
+
+
+diffU = (df['Pore_Smooth']-gamma_w*df['Depth_m'])
+df['B_q'] = diffU/(df['q_t']-df['sigma_v0'])
+
+print(df[['Q_t','F_r','B_q','gamma']])
+
+p_a = 100
+Q_t1 = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
+
+
+df['I_c'] = np.sqrt((3.47-np.log(Q_t1))**2+(np.log(df['F_r']+1.22))**2)
+
+n = 0.381*df['I_c']+0.05*(df['sigma_v0']/p_a)-0.15
+df['Q_tn'] = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**n
+
+N_kt = 10
+
+diff_qt = np.diff(df['q_t'])
+diff_depth = df['Depth_m'].diff().values[1:]
+# We create a full-length array (969 values)
+m_q_full = np.insert(diff_qt / diff_depth, 0, 0)
+df['m_q'] = m_q_full
+
+
+is_clay = df['I_c'] > 2.7
+df.loc[is_clay & (df['Q_tn'] > 14), 'alpha_m'] = 14
+df.loc[is_clay & (df['Q_tn'] <= 14), 'alpha_m'] = df['Q_tn']
+df.loc[is_clay, 'gamma_t2'] = 0.639 * df['q_t']**0.072 * (10 + df['m_q'])
+df.loc[is_clay, 'M'] = df['alpha_m'] * (df['q_t'] - df['sigma_v0'])
+df.loc[is_clay, 'OCR'] = 2 * (1 / (1.95 * df['M'] + 1) * (df['q_t'] - df['Pore_Smooth']) / df['sigma_v0'])**1.33
+df.loc[is_clay, 'm_prime'] = 1 - 0.28 / (1 + (df['I_c'] / 2.65)**2)
+df.loc[is_clay, 'sigma_p_prime'] = 0.33 * (df['q_t'] - df['sigma_v0'])**df['m_prime']
+df.loc[is_clay, 'K_0'] = 0.1 * ((df['q_t']- df['sigma_v0']) / df['sigma_v0_e'])
+df.loc[is_clay, 's_u'] = (df['q_t'] - df['sigma_v0']) / N_kt
+df.loc[is_clay, 'S_t'] = 7.1 / df['F_r']
+df.loc[is_clay, 'N_c'] = (df['q_t'] / df['s_u']) - (df['sigma_v0'] / df['s_u'])
+df.loc[is_clay, 'E_u'] = n * df['s_u']
+
+qt_col = 'q_t'
+sv_col = 'sigma_v0_e'
+valid_mask = (df[qt_col] > 0) & (df[sv_col] > 0)
+
+is_sand = df['I_c'] < 2.6
+df.loc[is_sand, 'D_r'] = -98 + 66*np.log10(df['q_t']/(df['sigma_v0'])**0.5)
+df.loc[is_sand, 'B_q_sand'] = df['B_q']
+
+df['phi_peak'] = np.nan
+df.loc[valid_mask, 'phi_peak'] = 17.6 + 11.0 * np.log10(
+    (df.loc[valid_mask, qt_col] / p_a) /
+    np.sqrt(df.loc[valid_mask, sv_col] / p_a)
+)
+
+avg_phi_per_layer14 = df.groupby('Layer_ID')['phi_peak'].mean()
+
+print("Average Peak Friction Angle per Layer:")
+print(avg_phi_per_layer14)
+df['gamma2'] = df['gamma']*1000
+
+#AI plots
+from matplotlib.colors import ListedColormap
+num_colors = len(labels)
+base_cmap = plt.get_cmap('tab10')
+custom_cmap = ListedColormap(base_cmap.colors[:num_colors])
+
+# 1. Create a figure with 3 subplots (1 row, 3 columns)
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(15, 10), sharey=True)
+# Define distinct colors for the layers
+unique_layers = sorted(df['Layer_ID'].unique())
+colors = plt.cm.tab10(range(len(unique_layers)))
+for i, layer_id in enumerate(unique_layers):
+    layer_data = df[df['Layer_ID'] == layer_id]
+    if not layer_data.empty:
+        # Subplot 1: Tip Resistance (qt)
+        ax1.plot(layer_data['Tip_Smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2, label=f'Layer {layer_id}')
+        # Subplot 2: Sleeve Friction (ft)
+        ax2.plot(layer_data['ft_Smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        # Subplot 3: Pore Pressure (u)
+        ax3.plot(layer_data['Pore_Smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        ax4.plot(layer_data['gamma2'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+ax1.invert_yaxis()
+# Labels and Titles
+ax1.set_xlabel('Tip Resistance $q_t$ [MPa]')
+ax1.set_ylabel('Depth [m]')
+ax1.set_title('Cone Resistance')
+ax2.set_xlabel('Sleeve Friction $f_t$ [MPa]')
+ax2.set_title('Sleeve Friction')
+ax3.set_xlabel('Pore Pressure $u$ [MPa]')
+ax3.set_title('Pore Pressure')
+ax4.set_xlabel('Specific weight $gamma_t$ [kN/m^2')
+ax4.set_title('Specific Weight')
+# Add Grid and Legend
+for ax in [ax1, ax2, ax3, ax4]:
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+ax1.legend(title="Soil Layers", loc='lower left')
+plt.tight_layout()
+plt.show()
+
+
+
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 10), sharey=True)
+# Define distinct colors for the layers
+unique_layers = sorted(df['Layer_ID'].unique())
+colors = plt.cm.tab10(range(len(unique_layers)))
+for i, layer_id in enumerate(unique_layers):
+    layer_data = df[df['Layer_ID'] == layer_id]
+    if not layer_data.empty:
+        ax1.plot(layer_data['Q_t'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2, label=f'Layer {layer_id}')
+        ax2.plot(layer_data['F_r'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        ax3.plot(layer_data['B_q'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+ax1.invert_yaxis()
+# Labels and Titles
+ax1.set_xlabel('Normalized Cone Resistance $Q_t$ [-]')
+ax1.set_ylabel('Depth [m]')
+ax1.set_title('Normalized Cone Resistance')
+ax2.set_xlabel('Friction ratio $F_r$ [-]')
+ax2.set_title('Friction ratio')
+ax3.set_xlabel('Pore Pressure Ratio $B_q$ [-]')
+ax3.set_title('Pore Pressure Ratio')
+# Add Grid and Legend
+for ax in [ax1, ax2, ax3]:
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+ax1.legend(title="Soil Layers", loc='lower left')
+plt.tight_layout()
+plt.show()
+
+
+df['Layer_ID'] = df['Layer_ID'].fillna(0).astype(int)
+plt.figure(figsize=(8, 6))
+# 1. Use 'tab10' to match your profile plot colors
+# 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
+# 3. Use vmin and vmax to lock the color range to your known layers
+scatter = plt.scatter(df['F_r'], df['Q_t'],
+                      c=df['Layer_ID'].astype(int),
+                      cmap=custom_cmap,
+                      vmin=0,
+                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
+                      edgecolors='k',
+                      alpha=0.5)
+# Add colorbar with discrete ticks to match the layers
+plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
+# Formatting for Robertson Chart
+plt.grid(visible=True, which="both", ls="-", alpha=0.5)
+plt.yscale('log')
+plt.xscale('log')
+plt.ylim(1, 10000)
+plt.xlim(0.1, 10)
+plt.xlabel('Friction Ratio $F_r$ [%]')
+plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
+plt.show()
+
+
+
+
+plt.figure(figsize=(8, 6))
+# 1. Use 'tab10' to match your profile plot colors
+# 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
+# 3. Use vmin and vmax to lock the color range to your known layers
+scatter = plt.scatter(df['B_q'], df['Q_t'],
+                      c=df['Layer_ID'].astype(int),
+                      cmap=custom_cmap,
+                      vmin=0,
+                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
+                      edgecolors='k',
+                      alpha=0.5)
+# Add colorbar with discrete ticks to match the layers
+plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
+# Formatting for Robertson Chart
+plt.grid(visible=True, which="both", ls="-", alpha=0.5)
+plt.yscale('log')
+plt.ylim(1, 10000)
+plt.xlim(-0.5, 1)
+plt.xlabel('Pore Pressure Ratio $B_q$ [-]')
+plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
+plt.show()
+
+plt.figure(figsize=(8, 6))
+scatter = plt.scatter(df['Depth_m'], df['phi_peak'],
+                      c=df['Layer_ID'].astype(int),
+                      cmap=custom_cmap,
+                      vmin=0,
+                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
+                      edgecolors='k',
+                      alpha=0.5)
+plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
+# Formatting for Robertson Chart
+plt.grid(visible=True, which="both", ls="-", alpha=0.5)
+plt.xlabel("Depth (m)")
+plt.ylabel("Peak Friction Angle (deg)")
+plt.show()
