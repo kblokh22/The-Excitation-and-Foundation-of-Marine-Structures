@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.ndimage import label, maximum_position
+from helper_functions import *
 from scipy.stats import weibull_min
 
 years = np.arange(2013,2019)
@@ -36,15 +37,15 @@ water_levels = np.array(water_levels)
 mid_waves = np.array(mid_waves)
 max_waves = np.array(max_waves)
 
-mid_waves = np.where(max_waves > 8, np.nan, mid_waves)
+mid_waves = np.where(mid_waves > 5, np.nan, mid_waves)
 
-# Filter out NaN values in max waves
+# Filter out NaN values in mid waves
 mask = ~np.isnan(mid_waves)
 filtered_dates = dates[mask]
 filtered_waves = mid_waves[mask]
 
 # Find peaks in filtered waves
-mask = filtered_waves > 3.8
+mask = filtered_waves > 3.2
 labels, num_features = label(mask)
 peak_indices = maximum_position(filtered_waves, labels, range(1, num_features + 1))
 
@@ -53,15 +54,43 @@ peak_indices = [idx[0] for idx in peak_indices]
 peak_values = filtered_waves[peak_indices]
 peak_dates = filtered_dates[peak_indices]
 
-peak_values = np.delete(peak_values, [1, 2, 4])
-peak_dates = np.delete(peak_dates, [1, 2, 4])
+plt.figure()
+plt.plot(filtered_dates, filtered_waves)
+plt.xlabel('Date')
+plt.ylabel('Significant wave height [m]')
+plt.show()
+
+# 1. Create a DataFrame for easier time manipulation
+peaks_df = pd.DataFrame({'date': peak_dates, 'hs': peak_values})
+peaks_df = peaks_df.sort_values('date')
+
+# 2. Define the storm window (e.g., 2 days)
+storm_window = pd.Timedelta(days=34)
+
+# 3. De-clustering Algorithm
+declustered_peaks = []
+
+while not peaks_df.empty:
+    # Get the highest peak in the current set
+    max_idx = peaks_df['hs'].idxmax()
+    max_row = peaks_df.loc[max_idx]
+    declustered_peaks.append(max_row)
+
+    # Remove all peaks within the storm window of this maximum
+    mask = (peaks_df['date'] >= max_row['date'] - storm_window) & \
+           (peaks_df['date'] <= max_row['date'] + storm_window)
+    peaks_df = peaks_df[~mask]
+
+# 4. Convert back to arrays for your LSM/MLM math
+declustered_df = pd.DataFrame(declustered_peaks).sort_values('date')
+peak_values = declustered_df['hs'].values
+peak_dates = declustered_df['date'].values
 
 plt.figure()
 plt.plot(filtered_dates, filtered_waves)
 plt.plot(peak_dates, peak_values, 'ro')
 plt.xlabel('Date')
 plt.ylabel('Significant wave height [m]')
-plt.title('Water level over time')
 plt.show()
 
 print(f"-----------------------\nSignificant wave heights:")
@@ -123,14 +152,16 @@ print(f"Relative Error: {relative_error * 100:.2f}%\n")
 
 # MAXIMUM LIKELIHOOD METHOD (MLM)
 
-k_mlm, B_mlm, A_mlm = weibull_min.fit(Hs)
+# k_mlm, B_mlm, A_mlm = weibull_min.fit(Hs)
+
+B_mlm, k_mlm, A_mlm, error_mlm = find_best_B(Hs)
 
 Y = (-np.log(1 - F))**(1/k_mlm)
 
 Hs_plot = A_mlm * Y + B_mlm
 
-n = len(Hs)
-error_mlm = (1 / n) * np.sum(np.abs((Hs_plot - Hs) / Hs))
+# n = len(Hs)
+# error_mlm = (1 / n) * np.sum(np.abs((Hs_plot - Hs) / Hs))
 
 plt.figure()
 plt.plot(Hs_plot, Y)
