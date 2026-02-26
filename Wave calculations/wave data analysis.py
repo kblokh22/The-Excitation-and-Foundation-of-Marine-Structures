@@ -69,16 +69,11 @@ print(f"Relative Error: {relative_error * 100:.2f}%\n")
 
 # MAXIMUM LIKELIHOOD METHOD (MLM)
 
-# k_mlm, B_mlm, A_mlm = weibull_min.fit(Hs)
-
 B_mlm, k_mlm, A_mlm, error_mlm = find_best_B(Hs)
 
 Y = (-np.log(1 - F))**(1/k_mlm)
 
 Hs_plot = A_mlm * Y + B_mlm
-
-# n = len(Hs)
-# error_mlm = (1 / n) * np.sum(np.abs((Hs_plot - Hs) / Hs))
 
 plt.figure()
 plt.plot(Hs_plot, Y)
