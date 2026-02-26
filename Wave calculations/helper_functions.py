@@ -1,4 +1,6 @@
 import math
+import numpy as np
+from scipy.optimize import fsolve
 
 def calculate_mle_k_a(data, x_prime, tol=1e-6):
     """Newton-Raphson to find k and A for a specific B (x_prime)."""
@@ -65,3 +67,34 @@ def find_best_B(data, start_B=3.0, step=0.01):
         current_B += step
 
     return best_B, best_k, best_A, min_error
+
+def calculate_gumbel_parameters(data):
+    x = np.array(data)
+    N = len(x)
+    mean_x = np.mean(x)
+
+    # Solve for A using iteration (Newton-Raphson)
+    # Equation: sum(xi * exp(-xi/A)) - (mean(x) - A) * sum(exp(-xi/A)) = 0
+    def equation_for_A(A):
+        term1 = np.sum(x * np.exp(-x / A))
+        term2 = (mean_x - A) * np.sum(np.exp(-x / A))
+        return term1 - term2
+
+    # Initial guess for A (standard deviation related)
+    initial_guess = np.std(x) * np.sqrt(6) / np.pi
+    A_fit = fsolve(equation_for_A, initial_guess)[0]
+
+    # Calculate B
+    # Equation: B = A * ln[N / sum(exp(-xi/A))]
+    sum_exp = np.sum(np.exp(-x / A_fit))
+    B_fit = A_fit * np.log(N / sum_exp)
+
+    # Calculate Average Relative Error E
+    x_observed = np.sort(x)
+    p = (np.arange(1, N + 1) - 0.44) / (N + 0.12)  # Standard plotting position
+    x_estimated = B_fit - A_fit * np.log(-np.log(p))
+
+    relative_errors = np.abs(x_estimated - x_observed) / x_observed
+    avg_relative_error = np.mean(relative_errors)
+
+    return A_fit, B_fit, avg_relative_error

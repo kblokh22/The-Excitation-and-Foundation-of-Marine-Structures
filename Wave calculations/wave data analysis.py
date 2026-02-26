@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.ndimage import label, maximum_position
 from helper_functions import *
-from scipy.stats import weibull_min
 
 years = np.arange(2013,2019)
 
@@ -142,9 +141,9 @@ relative_error = relative_error[relative_error.index(min(relative_error))]
 plt.figure()
 plt.plot(Hs_plot, Y)
 plt.plot(Hs, Y, "ro")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("LEAST SQUARE METHOD")
+plt.xlabel("Significant wave height [m]")
+plt.ylabel("Y")
+# plt.title("LEAST SQUARE METHOD")
 plt.show()
 
 print(f"For Least Square Method\n-----------------------\nA: {A:.2f}, B: {B:.2f}")
@@ -166,9 +165,9 @@ Hs_plot = A_mlm * Y + B_mlm
 plt.figure()
 plt.plot(Hs_plot, Y)
 plt.plot(Hs, Y, "ro")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("MAXIMUM LIKELIHOOD METHOD")
+plt.xlabel("Significant wave height [m]")
+plt.ylabel("Y")
+# plt.title("MAXIMUM LIKELIHOOD METHOD")
 plt.show()
 
 print(f"For Maximum Likelihood Method\n-----------------------------\nA: {A_mlm:.2f}, B: {B_mlm:.2f}, k: {k_mlm:.2f}")
