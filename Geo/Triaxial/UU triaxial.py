@@ -3,33 +3,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # the values are found by looking at the graphs
-q_4 = 190 # kPa
-q_5 = 480
-q_8 = 420
-q_11  = 600
 
-varep_1_4 = 0.15
-varep_1_5 = 0.15
-varep_1_8 = 0.05
-varep_1_11 = 0.15
+B = ["B4","B5", "B8", "B11"]
+depth = ["26,0 - 26,3 m", "16,0 - 16,7 m", "22,0 - 22,5 m",  "16,0 - 16,6 m"]
 
-c_u_4 = q_4/2
-c_u_5 = q_5/2
-c_u_8 = q_8/2
-c_u_11 = q_11/2
+q = np.array([190, 480, 420, 600])
+varep = np.array([0.15, 0.15, 0.05, 0.15,])
+w = np.array([15.89, 20.67, 16.98, 16.23])
 
 
+c_u = q/2
+df = pd.DataFrame()
+df["Boreholes"] = B
+df["depth [m]"] = depth
+df["q [kPa]"] = q
+df["varep [%]"] = varep
+df["c_u [kPa]"] = c_u
+df["w [%"] = w
 
 print("-"*100)
 print(" "*45, "results"," "*45)
+print(df)
 print("-"*100)
-print(f"Undrained shear strength for B4: {c_u_4}")
-print(f"Undrained shear strength for B5: {c_u_5}")
-print(f"Undrained shear strength for B8: {c_u_8}")
-print(f"Undrained shear strength for B11: {c_u_11}")
-print("-"*100)
-print(f"Undrained deformation B4: {varep_1_4}")
-print(f"Undrained deformation B5: {varep_1_5}")
-print(f"Undrained deformation B8: {varep_1_8}")
-print(f"Undrained deformation B11: {varep_1_11}")
-print("-"*100)
+
