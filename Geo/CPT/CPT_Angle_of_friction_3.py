@@ -738,6 +738,8 @@ scatter = plt.scatter(df['F_r'], df['Q_t'],
                       vmax=num_colors-1, # tab10 has 10 colors (0-9)
                       edgecolors='k',
                       alpha=0.5)
+
+
 # Add colorbar with discrete ticks to match the layers
 plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 # Formatting for Robertson Chart
