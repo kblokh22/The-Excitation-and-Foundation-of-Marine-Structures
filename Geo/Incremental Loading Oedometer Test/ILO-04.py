@@ -7,7 +7,9 @@ depth = np.array(['29.53-29.56', '29.53-29.56'])
 
 Q = np.array([0.12,0.26])
 
-sigma_oc_akai = np.array([0,700])
+
+sigma_oc_akai = np.array([680,890])
+sigma_oc_casa = np.array([600,800])
 
 df = pd.DataFrame()
 df['Borehole'] = B

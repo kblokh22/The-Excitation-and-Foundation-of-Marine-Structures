@@ -39,7 +39,7 @@ ax.set_yscale('log')
 
 # Set typical limits for CPT Robertson charts
 ax.set_xlim(0.1, 10)
-ax.set_ylim(1, 1000)
+ax.set_ylim(1, 10000)
 
 # Add Labels and Title
 ax.set_xlabel('Normalized Friction Ratio, $F_r$ (%)', fontsize=12)
