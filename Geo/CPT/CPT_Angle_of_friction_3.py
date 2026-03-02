@@ -657,12 +657,33 @@ df.loc[valid_mask, 'phi_peak'] = 17.6 + 11.0 * np.log10(
     np.sqrt(df.loc[valid_mask, sv_col] / p_a)
 )
 
+conditions = [
+    (df['q_t'] < 10),
+    (df['q_t'] >= 10) & (df['q_t'] <= 50),
+    (df['q_t'] > 50)
+]
+
+choices = [
+    df['q_t'] * 4,
+    df['q_t'] * 2 + 20,
+    120
+]
+
+df['M_0'] = np.select(conditions, choices, default=0)
+
+
 avg_phi_per_layer3 = df.groupby('Layer_ID')['phi_peak'].mean()
+avg_M_0_per_layer3 = df.groupby('Layer_ID')['M_0'].mean()
 
 print("Average Peak Friction Angle per Layer:")
 print(avg_phi_per_layer3)
-df['gamma2'] = df['gamma']*1000
+print("Average M_0")
+print(avg_M_0_per_layer3)
 
+
+
+
+df['gamma2'] = df['gamma']*1000
 #AI plots
 from matplotlib.colors import ListedColormap
 num_colors = len(labels)

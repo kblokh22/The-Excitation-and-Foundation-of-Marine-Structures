@@ -15,6 +15,8 @@ df = pd.DataFrame()
 df['Borehole'] = B
 df['Depth [m]'] = depth
 df['$Q_(1600-3200)$'] = Q
+df['sigma_oc_akai'] = sigma_oc_akai
+df['sigma_oc_casa'] = sigma_oc_casa
 
 print(df)
 
