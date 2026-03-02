@@ -20,3 +20,7 @@ df['sigma_oc_casa'] = sigma_oc_casa
 
 print(df)
 
+
+
+
+
