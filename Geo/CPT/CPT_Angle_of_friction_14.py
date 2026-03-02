@@ -439,13 +439,13 @@ choices = [
 df['M_0'] = np.select(conditions, choices, default=0)
 
 
-avg_phi_per_layer3 = df.groupby('Layer_ID')['phi_peak'].mean()
-avg_M_0_per_layer3 = df.groupby('Layer_ID')['M_0'].mean()
+avg_phi_per_layer14 = df.groupby('Layer_ID')['phi_peak'].mean()
+avg_M_0_per_layer14 = df.groupby('Layer_ID')['M_0'].mean()
 
 print("Average Peak Friction Angle per Layer:")
-print(avg_phi_per_layer3)
+print(avg_phi_per_layer14)
 print("Average M_0")
-print(avg_M_0_per_layer3)
+print(avg_M_0_per_layer14)
 
 
 df['gamma2'] = df['gamma'] * 1000
