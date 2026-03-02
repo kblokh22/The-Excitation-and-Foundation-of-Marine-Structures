@@ -544,7 +544,7 @@ ax.scatter(df['F_r'], df['Q_t'],
 ax.grid(visible=True, which="both", ls="-", alpha=0.5)
 ax.set_yscale('log')
 ax.set_xscale('log')
-ax.set_ylim(1, 10000)
+ax.set_ylim(1, 1000)
 ax.set_xlim(0.1, 10)
 ax.set_xlabel('Friction Ratio $F_r$ [%]')
 ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
