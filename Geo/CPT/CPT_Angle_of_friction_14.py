@@ -2,6 +2,24 @@ import numpy as np
 import pandas as pd
 import io
 import matplotlib.pyplot as plt
+def plot_robertson_boundaries(ax):
+    """Adds Robertson (1990) SBT zones to an existing Axes."""
+    log_Fr_c, log_Qt_c = -1.22, 3.47
+    Ic_boundaries = [1.31, 2.05, 2.60, 2.95, 3.60]
+    theta = np.linspace(0, 2 * np.pi, 1000)
+
+    for Ic in Ic_boundaries:
+        Fr = 10**(log_Fr_c + Ic * np.cos(theta))
+        Qt = 10**(log_Qt_c + Ic * np.sin(theta))
+        ax.plot(Fr, Qt, 'k-', linewidth=1.0, alpha=0.6, zorder=1)
+
+    # Zone Labels
+    labels = [
+        (0.3, 300, '7'), (0.8, 80, '6'), (1.5, 30, '5'),
+        (2.5, 12, '4'), (4.5, 5, '3'), (7.0, 1.5, '2')
+    ]
+    for x, y, txt in labels:
+        ax.text(x, y, txt, fontsize=9, fontweight='bold', alpha=0.6)
 
 raw_data = """
    0.00 -0.0001  0.0000  0.0000 -1.0360  0.2928 20.0000  1.0766 
@@ -406,12 +424,31 @@ df.loc[valid_mask, 'phi_peak'] = 17.6 + 11.0 * np.log10(
     np.sqrt(df.loc[valid_mask, sv_col] / p_a)
 )
 
-avg_phi_per_layer14 = df.groupby('Layer_ID')['phi_peak'].mean()
+conditions = [
+    (df['q_t'] < 10),
+    (df['q_t'] >= 10) & (df['q_t'] <= 50),
+    (df['q_t'] > 50)
+]
+
+choices = [
+    df['q_t'] * 4,
+    df['q_t'] * 2 + 20,
+    120
+]
+
+df['M_0'] = np.select(conditions, choices, default=0)
+
+
+avg_phi_per_layer3 = df.groupby('Layer_ID')['phi_peak'].mean()
+avg_M_0_per_layer3 = df.groupby('Layer_ID')['M_0'].mean()
 
 print("Average Peak Friction Angle per Layer:")
-print(avg_phi_per_layer14)
-df['gamma2'] = df['gamma']*1000
+print(avg_phi_per_layer3)
+print("Average M_0")
+print(avg_M_0_per_layer3)
 
+
+df['gamma2'] = df['gamma'] * 1000
 #AI plots
 from matplotlib.colors import ListedColormap
 num_colors = len(labels)
@@ -487,28 +524,30 @@ plt.tight_layout()
 plt.show()
 
 
-df['Layer_ID'] = df['Layer_ID'].fillna(0).astype(int)
-plt.figure(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(8, 8))
+plot_robertson_boundaries(ax)
 # 1. Use 'tab10' to match your profile plot colors
 # 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
 # 3. Use vmin and vmax to lock the color range to your known layers
-scatter = plt.scatter(df['F_r'], df['Q_t'],
+ax.scatter(df['F_r'], df['Q_t'],
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
                       vmin=0,
                       vmax=num_colors-1, # tab10 has 10 colors (0-9)
                       edgecolors='k',
                       alpha=0.5)
+
+
 # Add colorbar with discrete ticks to match the layers
-plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
+# plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 # Formatting for Robertson Chart
-plt.grid(visible=True, which="both", ls="-", alpha=0.5)
-plt.yscale('log')
-plt.xscale('log')
-plt.ylim(1, 10000)
-plt.xlim(0.1, 10)
-plt.xlabel('Friction Ratio $F_r$ [%]')
-plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
+ax.grid(visible=True, which="both", ls="-", alpha=0.5)
+ax.set_yscale('log')
+ax.set_xscale('log')
+ax.set_ylim(1, 10000)
+ax.set_xlim(0.1, 10)
+ax.set_xlabel('Friction Ratio $F_r$ [%]')
+ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
 plt.show()
 
 
