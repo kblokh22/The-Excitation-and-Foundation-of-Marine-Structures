@@ -63,8 +63,8 @@ df1['Void ratio [-]'] = e
 df1['w [%]'] = w
 
 df2 = pd.DataFrame()
-df2['Gamma_sat [kN/m^2]'] = gamma_sat
-df2['Gamma_dry [kN/m^2]'] = gamma_dry
+df2['Gamma_sat [kN/m^3]'] = gamma_sat
+df2['Gamma_dry [kN/m^3]'] = gamma_dry
 df2['Type'] = Test
 
 
