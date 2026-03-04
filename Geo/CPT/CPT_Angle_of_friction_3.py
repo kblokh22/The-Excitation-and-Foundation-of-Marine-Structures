@@ -564,6 +564,7 @@ raw_data = '''
 df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
                      names=['Depth_m', 'Tip_MPa', 'Sleeve_MPa', 'Pore_MPa','I_x','I_y','Time_Stamp','I_res'],
                      engine='python')
+df = df[df['Depth_m'] > 0.1].copy()
 
 a = 0.8
 #A_n = 0
@@ -590,15 +591,14 @@ labels = [0,1,2]
 df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=True)
 
 
-df['gamma'] = (26 - 14/(1+(0.5*np.log(df['ft_Smooth']))**2))*0.001
-
+df['gamma'] = (26 - 14/(1+(0.5*np.log10(df['ft_Smooth']))**2))*0.001
 
 
 #regne afsnit
 gamma_w = 0.01
 df['q_t'] = df['Tip_Smooth'] + df['Pore_Smooth']*(1-a)
 df['sigma_v0'] = df['Depth_m'] * df['gamma']
-df['sigma_v0_e'] = df['Depth_m'] * (df['gamma']-gamma_w)
+df['sigma_v0_e'] = (df['Depth_m'] * (df['gamma'] - gamma_w)).clip(lower=0.005)
 
 df['Q_t'] = (df['q_t']-df['sigma_v0'])/df['sigma_v0_e']
 
@@ -611,48 +611,27 @@ df['B_q'] = diffU/(df['q_t']-df['sigma_v0'])
 
 print(df[['Q_t','F_r','B_q','gamma']])
 
-p_a = 100
-Q_t1 = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
+p_a = 0.100
+Q_t1_safe = ((df['q_t'] - df['sigma_v0']) / p_a) * (p_a / df['sigma_v0_e'])
 
 
-df['I_c'] = np.sqrt((3.47-np.log(Q_t1))**2+(np.log(df['F_r']+1.22))**2)
+df['I_c'] = np.sqrt((3.47 - np.log10(Q_t1_safe.clip(lower=0.1)))**2 + (np.log10(df['F_r'].clip(lower=0.1)) + 1.22)**2)
+df['I_c'] = df['I_c'].clip(upper=4.0)
 
 n = 0.381*df['I_c']+0.05*(df['sigma_v0']/p_a)-0.15
 df['Q_tn'] = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**n
 
-N_kt = 10
-
-diff_qt = np.diff(df['q_t'])
-diff_depth = df['Depth_m'].diff().values[1:]
-# We create a full-length array (969 values)
-m_q_full = np.insert(diff_qt / diff_depth, 0, 0)
-df['m_q'] = m_q_full
-
-
-is_clay = df['I_c'] > 2.7
-df.loc[is_clay & (df['Q_tn'] > 14), 'alpha_m'] = 14
-df.loc[is_clay & (df['Q_tn'] <= 14), 'alpha_m'] = df['Q_tn']
-df.loc[is_clay, 'gamma_t2'] = 0.639 * df['q_t']**0.072 * (10 + df['m_q'])
-df.loc[is_clay, 'M'] = df['alpha_m'] * (df['q_t'] - df['sigma_v0'])
-df.loc[is_clay, 'OCR'] = 2 * (1 / (1.95 * df['M'] + 1) * (df['q_t'] - df['Pore_Smooth']) / df['sigma_v0'])**1.33
-df.loc[is_clay, 'm_prime'] = 1 - 0.28 / (1 + (df['I_c'] / 2.65)**2)
-df.loc[is_clay, 'sigma_p_prime'] = 0.33 * (df['q_t'] - df['sigma_v0'])**df['m_prime']
-df.loc[is_clay, 'K_0'] = 0.1 * ((df['q_t']- df['sigma_v0']) / df['sigma_v0_e'])
-df.loc[is_clay, 's_u'] = (df['q_t'] - df['sigma_v0']) / N_kt
-df.loc[is_clay, 'S_t'] = 7.1 / df['F_r']
-df.loc[is_clay, 'N_c'] = (df['q_t'] / df['s_u']) - (df['sigma_v0'] / df['s_u'])
-df.loc[is_clay, 'E_u'] = n * df['s_u']
+N_kt = 10.5+7*np.log10(df['F_r'])
 
 qt_col = 'q_t'
 sv_col = 'sigma_v0_e'
 valid_mask = (df[qt_col] > 0) & (df[sv_col] > 0)
 
-is_sand = df['I_c'] < 2.6
-df.loc[is_sand, 'D_r'] = -98 + 66*np.log10(df['q_t']/(df['sigma_v0'])**0.5)
-df.loc[is_sand, 'B_q_sand'] = df['B_q']
+df['D_r'] = -98 + 66*np.log10(df['q_t']/(df['sigma_v0'])**0.5)
+df['B_q_sand'] = df['B_q']
 
-df['phi_peak'] = np.nan
-df.loc[valid_mask, 'phi_peak'] = 17.6 + 11.0 * np.log10(
+df['phi_peak_KM'] = np.nan
+df.loc[valid_mask, 'phi_peak_KM'] = 17.6 + 11.0 * np.log10(
     (df.loc[valid_mask, qt_col] / p_a) /
     np.sqrt(df.loc[valid_mask, sv_col] / p_a)
 )
@@ -672,7 +651,7 @@ choices = [
 df['M_0'] = np.select(conditions, choices, default=0)
 
 
-avg_phi_per_layer3 = df.groupby('Layer_ID')['phi_peak'].mean()
+avg_phi_per_layer3 = df.groupby('Layer_ID')['phi_peak_KM'].mean()
 avg_M_0_per_layer3 = df.groupby('Layer_ID')['M_0'].mean()
 
 print("Average Peak Friction Angle per Layer:")
@@ -680,6 +659,41 @@ print(avg_phi_per_layer3)
 print("Average M_0")
 print(avg_M_0_per_layer3)
 
+
+Fine_sand = df['I_c'] > 2.2
+coarse_sand = df['I_c'] <= 2.2
+
+conditions1 = [
+    (df['Q_tn'] < 14),
+    (df['Q_tn'] >= 14),
+]
+choices1 = [
+    df['Q_tn'],
+    14
+]
+df['alpha_M'] = np.select(conditions1, choices1, default=0)
+df['M_1'] = df['alpha_M']*(df['q_t']-df['sigma_v0'])
+
+
+avg_M_1_per_layer3 = df.groupby('Layer_ID')['M_1'].mean()
+print(avg_M_1_per_layer3)
+
+
+df['G_0'] = df['q_t'] * 10**(1.47 * df['I_c'] + 0.67)
+
+nu = 0.3
+df['E_0'] = 2*(1+nu)*df['G_0']
+
+df['OCR'] = ((df['q_t']-df['sigma_v0'])/(1.9*df['sigma_v0_e']*(df['Q_tn'])**0.33))
+df['K_0'] = (1-np.sin(np.radians(df['phi_peak_KM'])))*(df['OCR'])**(np.sin(np.radians(df['phi_peak_KM'])))
+
+
+avg_G_0_per_layer3 = df.groupby('Layer_ID')['G_0'].mean()
+print(avg_G_0_per_layer3)
+avg_E_0_per_layer3 = df.groupby('Layer_ID')['E_0'].mean()
+print(avg_E_0_per_layer3)
+avg_K_0_per_layer3 = df.groupby('Layer_ID')['K_0'].mean()
+print(avg_K_0_per_layer3)
 
 
 
@@ -813,7 +827,7 @@ plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
 plt.show()
 
 plt.figure(figsize=(8, 6))
-scatter = plt.scatter(df['Depth_m'], df['phi_peak'],
+scatter = plt.scatter(df['Depth_m'], df['phi_peak_KM'],
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
                       vmin=0,
