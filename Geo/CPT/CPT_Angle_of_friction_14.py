@@ -387,7 +387,6 @@ df['I_c'] = np.sqrt((3.47-np.log(Q_t1))**2+(np.log(df['F_r']+1.22))**2)
 n = 0.381*df['I_c']+0.05*(df['sigma_v0']/p_a)-0.15
 df['Q_tn'] = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**n
 
-N_kt = 10
 
 diff_qt = np.diff(df['q_t'])
 diff_depth = df['Depth_m'].diff().values[1:]
