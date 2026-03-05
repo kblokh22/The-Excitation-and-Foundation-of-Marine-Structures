@@ -624,6 +624,7 @@ df['M_0'] = np.select(
 df['M'] = 8.25*(df['qt_smooth']-df['sigma_v0'])
 
 help = (df['qt_smooth'] / df['sigma_v0_e'])
+
 # ( Mayne 2001)
 df['OCR'] = (0.192 * help**1.22) / (12.2 * (df['sigma_v0_e'] / p_a)**0.42)
 
@@ -640,7 +641,7 @@ df['K_0'] = (1 - np.sin(phi_rad)) * (df['OCR']**np.sin(phi_rad))
 
 
 df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
-df['E_0'] = 2*df['G_0']*(1-0.3)
+df['E_0'] = 2*df['G_0']*(1+0.3)
 
 
 
