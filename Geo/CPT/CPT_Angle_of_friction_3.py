@@ -609,8 +609,8 @@ df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0'])) * 100
 df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
 
 
-# Friction Angle (Mayne)
-df['phi_peak'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
+# Friction Angle (Kulhawi & Mayne)
+df['phi_peak_KM'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
 
 
 
@@ -620,6 +620,9 @@ df['M_0'] = np.select(
     [df['qt_smooth'] * 4, df['qt_smooth'] * 2 + 20000],
     default=120000
 )
+
+df['M'] = 8.25*(df['qt_smooth']-df['sigma_v0'])
+
 help = (df['qt_smooth'] / df['sigma_v0_e'])
 # ( Mayne 2001)
 df['OCR'] = (0.192 * help**1.22) / (12.2 * (df['sigma_v0_e'] / p_a)**0.42)
@@ -631,7 +634,7 @@ df['OCR'] = (0.192 * help**1.22) / (12.2 * (df['sigma_v0_e'] / p_a)**0.42)
 
 
 # K0 calculation
-phi_rad = np.radians(df['phi_peak'])
+phi_rad = np.radians(df['phi_peak_KM'])
 df['K_0'] = (1 - np.sin(phi_rad)) * (df['OCR']**np.sin(phi_rad))
 
 
@@ -648,7 +651,31 @@ labels = [0, 1, 2]
 df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=True)
 
 print("--- Layer Averages (all in kPa except Phi/K0) ---")
-print(df.groupby('Layer_ID')[['phi_peak', 'G_0', 'E_0', 'K_0', 'OCR','M_0']].mean().round(2))
+print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'K_0', 'OCR','M','gamma']].mean().round(2))
+print(df.groupby('Layer_ID')[['phi_peak_KM']].mean().round(2))
+
+
+
+plt.figure(figsize=(8, 6))
+plt.plot(df['G_0']/1000,df['Depth_m'],)
+plt.grid(visible=True, which="both", ls="-", alpha=0.5)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 df['gamma2'] = df['gamma']
@@ -781,7 +808,7 @@ plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
 
 
 plt.figure(figsize=(8, 6))
-scatter = plt.scatter(df['Depth_m'], df['phi_peak'],
+scatter = plt.scatter(df['Depth_m'], df['phi_peak_KM'],
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
                       vmin=0,
@@ -793,3 +820,4 @@ plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.xlabel("Depth (m)")
 plt.ylabel("Peak Friction Angle (deg)")
+
