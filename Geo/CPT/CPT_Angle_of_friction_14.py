@@ -329,7 +329,7 @@ df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
                      engine='python')
 
 
-
+N_kt = 1
 a = 0.8
 #A_n = 0
 #A_c = 0

@@ -567,6 +567,7 @@ df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
 
 # Filter out surface noise to prevent division by zero
 df = df[df['Depth_m'] > 0.2].copy()
+df = df[df['Sleeve_MPa']> 0].copy()
 
 # 2. Convert raw data to kPa immediately
 df['qt_kPa'] = df['Tip_MPa'] * 1000
@@ -584,8 +585,8 @@ df['fs_smooth'] = df['fs_kPa'].rolling(window=5, center=True).mean().fillna(df['
 df['u_smooth'] = df['u_kPa'].rolling(window=5, center=True).mean().fillna(df['u_kPa'])
 
 df['qt_smooth'] = (df['qt_smooth']) + (df['u_smooth'] * (1 - a_cone))
+h_w = 13.5
 
-h_w = 0
 
 # 4. Unit Weight and Stresses
 # kulhawi and mayne 2010
@@ -600,7 +601,7 @@ df['u0'] = gamma_w * (df['Depth_m'] + h_w)
 
 # Effective Stress: This effectively becomes Depth_m * (gamma - gamma_w)
 # Notice h_w cancels out!
-df['sigma_v0_e'] = (df['sigma_v0'] - df['u0']).clip(lower=5.0)
+df['sigma_v0_e'] = (df['sigma_v0'] - df['u0'])
 
 
 # 5. Dimensionless Parameters
@@ -609,39 +610,34 @@ df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0'])) * 100
 df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
 
 
+
+df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10(df['F_r']) + 1.22)**2)**0.5
+
+C2 = 2.41
+C0 = 157
+df['D_r'] = (1 / C2) * np.log(df['qt_smooth'] / (C0 * (df['sigma_v0_e'])**0.55))
+df['D_r'] = 100 * (0.268 * np.log((df['qt_smooth'] / p_a) / np.sqrt(df['sigma_v0_e'] / p_a)) - 0.675)
+
+
+
 # Friction Angle (Kulhawi & Mayne)
 df['phi_peak_KM'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
 
 
 
-# Constrained Modulus M_0 (Logic converted to kPa)
-df['M_0'] = np.select(
-    [df['qt_smooth'] < 10000, (df['qt_smooth'] >= 10000) & (df['qt_smooth'] <= 50000)],
-    [df['qt_smooth'] * 4, df['qt_smooth'] * 2 + 20000],
-    default=120000
-)
+alpha_m = 0.0188*(10**(0.55*df['I_c']+1.68))
 
-df['M'] = 8.25*(df['qt_smooth']-df['sigma_v0'])
+
+df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
 
 help = (df['qt_smooth'] / df['sigma_v0_e'])
 
-# ( Mayne 2001)
-df['OCR'] = (0.192 * help**1.22) / (12.2 * (df['sigma_v0_e'] / p_a)**0.42)
-
-
-
-
-
-
-
-# K0 calculation
-phi_rad = np.radians(df['phi_peak_KM'])
-df['K_0'] = (1 - np.sin(phi_rad)) * (df['OCR']**np.sin(phi_rad))
-
-
-
 df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
 df['E_0'] = 2*df['G_0']*(1+0.3)
+
+
+#Robertson (2009/2010)
+df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
 
 
 
@@ -651,21 +647,10 @@ bins = [0, 2.5, 3.6, 5.34]
 labels = [0, 1, 2]
 df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=True)
 
-print("--- Layer Averages (all in kPa except Phi/K0) ---")
-print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'K_0', 'OCR','M','gamma']].mean().round(2))
-print(df.groupby('Layer_ID')[['phi_peak_KM']].mean().round(2))
+print(df.groupby('Layer_ID')[[ 'sigma_v0', 'sigma_v0_e', 'qt_smooth']].mean().round(2))
 
-
-
-plt.figure(figsize=(8, 6))
-plt.plot(df['G_0']/1000,df['Depth_m'],)
-plt.grid(visible=True, which="both", ls="-", alpha=0.5)
-plt.show()
-
-
-
-
-
+print("--- Layer Average ---")
+print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
 
 
 
@@ -777,7 +762,7 @@ ax.scatter(df['F_r'], df['Q_t'],
 ax.grid(visible=True, which="both", ls="-", alpha=0.5)
 ax.set_yscale('log')
 ax.set_xscale('log')
-ax.set_ylim(1, 1000)
+ax.set_ylim(1, 10000)
 ax.set_xlim(0.1, 10)
 ax.set_xlabel('Friction Ratio $F_r$ [%]')
 ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
