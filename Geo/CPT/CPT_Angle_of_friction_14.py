@@ -325,129 +325,107 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
-                     names=['Depth_m', 'Tip_MPa', 'Sleeve_MPa', 'Pore_MPa','I_x','I_y','Time_Stamp','I_res'],
-                     engine='python')
+                 names=['Depth_m', 'Tip_MPa', 'Sleeve_MPa', 'Pore_MPa','I_x','I_y','Time_Stamp','I_res'],
+                 engine='python')
+
+# Filter out surface noise to prevent division by zero
+df = df[df['Depth_m'] > 0.2].copy()
+df = df[df['Sleeve_MPa']> 0].copy()
+
+# 2. Convert raw data to kPa immediately
+df['qt_kPa'] = df['Tip_MPa'] * 1000
+df['fs_kPa'] = df['Sleeve_MPa'] * 1000
+df['u_kPa'] = df['Pore_MPa'] * 1000
+
+# Constants in kPa/kN
+p_a = 100.0        # Atmospheric pressure in kPa
+gamma_w = 10.0     # Unit weight of water in kN/m3
+a_cone = 0.8       # Area ratio
+
+# 3. Smoothing (performed on kPa values)
+df['qt_smooth'] = df['qt_kPa'].rolling(window=5, center=True).mean().fillna(df['qt_kPa'])
+df['fs_smooth'] = df['fs_kPa'].rolling(window=5, center=True).mean().fillna(df['fs_kPa'])
+df['u_smooth'] = df['u_kPa'].rolling(window=5, center=True).mean().fillna(df['u_kPa'])
+
+df['qt_smooth'] = (df['qt_smooth']) + (df['u_smooth'] * (1 - a_cone))
+h_w = 8.5
 
 
-N_kt = 1
-a = 0.8
-#A_n = 0
-#A_c = 0
-# a = A_n/A_c
+# 4. Unit Weight and Stresses
+# kulhawi and mayne 2010
+df['gamma'] = 26 - 14/(1 + (0.5 * np.log10(df['fs_smooth']+1))**2)
+
+
+# If above formula feels complex, a common sand default is 18-20
+df['sigma_v0'] = (df['Depth_m'] * df['gamma'])+ h_w * gamma_w
+
+# Pore Pressure: hydrostatic pressure from water surface down to depth
+df['u0'] = gamma_w * (df['Depth_m'] + h_w)
+
+# Effective Stress: This effectively becomes Depth_m * (gamma - gamma_w)
+# Notice h_w cancels out!
+df['sigma_v0_e'] = (df['sigma_v0'] - df['u0'])
+
+
+# 5. Dimensionless Parameters
+df['Q_t'] = (df['qt_smooth'] - df['sigma_v0']) / df['sigma_v0_e']
+df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0'])) * 100
+df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
 
 
 
-Asb = 0.015
-Ast = 0.010
-As = 150.0
+df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10(df['F_r']) + 1.22)**2)**0.5
 
-if 'u3' in df.columns:
-    df['ft'] = df['Sleeve_MPa'] - ((df['Pore_MPa'] * Asb - df['u3'] * Ast) / As)
-else:
-    df['ft'] = df['Sleeve_MPa']
-
-df['Tip_Smooth'] = df['Tip_MPa'].rolling(window=5,center=True).mean()
-df['ft_Smooth'] = df['ft'].rolling(window=5, center=True).mean()
-df['Pore_Smooth'] = df['Pore_MPa'].rolling(window=5, center=True).mean()
+C2 = 2.41
+C0 = 157
+df['D_r'] = (1 / C2) * np.log(df['qt_smooth'] / (C0 * (df['sigma_v0_e'])**0.55))
+df['D_r'] = 100 * (0.268 * np.log((df['qt_smooth'] / p_a) / np.sqrt(df['sigma_v0_e'] / p_a)) - 0.675)
 
 
-bins = [ 0,0.6,1.6,2.2,2.6,3]
-labels = [0,1,2,4,5]
+
+# Friction Angle (Kulhawi & Mayne)
+df['phi_peak_KM'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
+
+
+
+alpha_m = 0.0188*(10**(0.55*df['I_c']+1.68))
+
+
+df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
+
+help = (df['qt_smooth'] / df['sigma_v0_e'])
+
+df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
+df['E_0'] = 2*df['G_0']*(1+0.3)
+
+
+#Robertson (2009/2010)
+df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
+
+
+bins = [0,1.6,1.95,3]
+labels = [0,1,2]
 
 df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=True)
 
+print(df.groupby('Layer_ID')[[ 'sigma_v0', 'sigma_v0_e', 'qt_smooth']].mean().round(2))
 
-df['gamma'] = (26 - 14/(1+(0.5*np.log(df['ft_Smooth']))**2))*0.001
-
-
-
-#regne afsnit
-gamma_w = 0.01
-df['q_t'] = df['Tip_Smooth'] + df['Pore_Smooth']*(1-a)
-df['sigma_v0'] = df['Depth_m'] * df['gamma']
-df['sigma_v0_e'] = df['Depth_m'] * (df['gamma']-gamma_w)
-
-df['Q_t'] = (df['q_t']-df['sigma_v0'])/df['sigma_v0_e']
+print("--- Layer Average ---")
+print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
 
 
-df['F_r'] = df['ft']/(df['q_t']-df['sigma_v0'])*100
 
 
-diffU = (df['Pore_Smooth']-gamma_w*df['Depth_m'])
-df['B_q'] = diffU/(df['q_t']-df['sigma_v0'])
-
-print(df[['Q_t','F_r','B_q','gamma']])
-
-p_a = 100
-Q_t1 = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
 
 
-df['I_c'] = np.sqrt((3.47-np.log(Q_t1))**2+(np.log(df['F_r']+1.22))**2)
-
-n = 0.381*df['I_c']+0.05*(df['sigma_v0']/p_a)-0.15
-df['Q_tn'] = ((df['q_t']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**n
 
 
-diff_qt = np.diff(df['q_t'])
-diff_depth = df['Depth_m'].diff().values[1:]
-# We create a full-length array (969 values)
-m_q_full = np.insert(diff_qt / diff_depth, 0, 0)
-df['m_q'] = m_q_full
 
 
-is_clay = df['I_c'] > 2.7
-df.loc[is_clay & (df['Q_tn'] > 14), 'alpha_m'] = 14
-df.loc[is_clay & (df['Q_tn'] <= 14), 'alpha_m'] = df['Q_tn']
-df.loc[is_clay, 'gamma_t2'] = 0.639 * df['q_t']**0.072 * (10 + df['m_q'])
-df.loc[is_clay, 'M'] = df['alpha_m'] * (df['q_t'] - df['sigma_v0'])
-df.loc[is_clay, 'OCR'] = 2 * (1 / (1.95 * df['M'] + 1) * (df['q_t'] - df['Pore_Smooth']) / df['sigma_v0'])**1.33
-df.loc[is_clay, 'm_prime'] = 1 - 0.28 / (1 + (df['I_c'] / 2.65)**2)
-df.loc[is_clay, 'sigma_p_prime'] = 0.33 * (df['q_t'] - df['sigma_v0'])**df['m_prime']
-df.loc[is_clay, 'K_0'] = 0.1 * ((df['q_t']- df['sigma_v0']) / df['sigma_v0_e'])
-df.loc[is_clay, 's_u'] = (df['q_t'] - df['sigma_v0']) / N_kt
-df.loc[is_clay, 'S_t'] = 7.1 / df['F_r']
-df.loc[is_clay, 'N_c'] = (df['q_t'] / df['s_u']) - (df['sigma_v0'] / df['s_u'])
-df.loc[is_clay, 'E_u'] = n * df['s_u']
-
-qt_col = 'q_t'
-sv_col = 'sigma_v0_e'
-valid_mask = (df[qt_col] > 0) & (df[sv_col] > 0)
-
-is_sand = df['I_c'] < 2.6
-df.loc[is_sand, 'D_r'] = -98 + 66*np.log10(df['q_t']/(df['sigma_v0'])**0.5)
-df.loc[is_sand, 'B_q_sand'] = df['B_q']
-
-df['phi_peak'] = np.nan
-df.loc[valid_mask, 'phi_peak'] = 17.6 + 11.0 * np.log10(
-    (df.loc[valid_mask, qt_col] / p_a) /
-    np.sqrt(df.loc[valid_mask, sv_col] / p_a)
-)
-
-conditions = [
-    (df['q_t'] < 10),
-    (df['q_t'] >= 10) & (df['q_t'] <= 50),
-    (df['q_t'] > 50)
-]
-
-choices = [
-    df['q_t'] * 4,
-    df['q_t'] * 2 + 20,
-    120
-]
-
-df['M_0'] = np.select(conditions, choices, default=0)
 
 
-avg_phi_per_layer14 = df.groupby('Layer_ID')['phi_peak'].mean()
-avg_M_0_per_layer14 = df.groupby('Layer_ID')['M_0'].mean()
-
-print("Average Peak Friction Angle per Layer:")
-print(avg_phi_per_layer14)
-print("Average M_0")
-print(avg_M_0_per_layer14)
-
-
-df['gamma2'] = df['gamma'] * 1000
+df['gamma2'] = df['gamma']
 #AI plots
 from matplotlib.colors import ListedColormap
 num_colors = len(labels)
@@ -463,13 +441,13 @@ for i, layer_id in enumerate(unique_layers):
     layer_data = df[df['Layer_ID'] == layer_id]
     if not layer_data.empty:
         # Subplot 1: Tip Resistance (qt)
-        ax1.plot(layer_data['Tip_Smooth'], layer_data['Depth_m'],
+        ax1.plot(layer_data['qt_smooth'], layer_data['Depth_m'],
                  color=colors[i], linewidth=2, label=f'Layer {layer_id}')
         # Subplot 2: Sleeve Friction (ft)
-        ax2.plot(layer_data['ft_Smooth'], layer_data['Depth_m'],
+        ax2.plot(layer_data['fs_smooth'], layer_data['Depth_m'],
                  color=colors[i], linewidth=2)
         # Subplot 3: Pore Pressure (u)
-        ax3.plot(layer_data['Pore_Smooth'], layer_data['Depth_m'],
+        ax3.plot(layer_data['u_smooth'], layer_data['Depth_m'],
                  color=colors[i], linewidth=2)
         ax4.plot(layer_data['gamma2'], layer_data['Depth_m'],
                  color=colors[i], linewidth=2)
@@ -489,7 +467,7 @@ for ax in [ax1, ax2, ax3, ax4]:
     ax.grid(True, which="both", ls="-", alpha=0.5)
 ax1.legend(title="Soil Layers", loc='lower left')
 plt.tight_layout()
-plt.show()
+
 
 
 
@@ -520,8 +498,10 @@ for ax in [ax1, ax2, ax3]:
     ax.grid(True, which="both", ls="-", alpha=0.5)
 ax1.legend(title="Soil Layers", loc='lower left')
 plt.tight_layout()
-plt.show()
 
+
+
+df['Layer_ID'] = df['Layer_ID'].fillna(0).astype(int)
 
 fig, ax = plt.subplots(figsize=(8, 8))
 plot_robertson_boundaries(ax)
@@ -543,11 +523,11 @@ ax.scatter(df['F_r'], df['Q_t'],
 ax.grid(visible=True, which="both", ls="-", alpha=0.5)
 ax.set_yscale('log')
 ax.set_xscale('log')
-ax.set_ylim(1, 1000)
+ax.set_ylim(1, 10000)
 ax.set_xlim(0.1, 10)
 ax.set_xlabel('Friction Ratio $F_r$ [%]')
 ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
-plt.show()
+
 
 
 
@@ -572,10 +552,10 @@ plt.ylim(1, 10000)
 plt.xlim(-0.5, 1)
 plt.xlabel('Pore Pressure Ratio $B_q$ [-]')
 plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
-plt.show()
+
 
 plt.figure(figsize=(8, 6))
-scatter = plt.scatter(df['Depth_m'], df['phi_peak'],
+scatter = plt.scatter(df['Depth_m'], df['phi_peak_KM'],
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
                       vmin=0,
@@ -588,3 +568,4 @@ plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.xlabel("Depth (m)")
 plt.ylabel("Peak Friction Angle (deg)")
 plt.show()
+

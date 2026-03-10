@@ -585,7 +585,7 @@ df['fs_smooth'] = df['fs_kPa'].rolling(window=5, center=True).mean().fillna(df['
 df['u_smooth'] = df['u_kPa'].rolling(window=5, center=True).mean().fillna(df['u_kPa'])
 
 df['qt_smooth'] = (df['qt_smooth']) + (df['u_smooth'] * (1 - a_cone))
-h_w = 13.5
+h_w = 14
 
 
 # 4. Unit Weight and Stresses
@@ -651,14 +651,7 @@ print(df.groupby('Layer_ID')[[ 'sigma_v0', 'sigma_v0_e', 'qt_smooth']].mean().ro
 
 print("--- Layer Average ---")
 print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
-
-
-
-
-
-
-
-
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
 
 
 
