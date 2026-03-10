@@ -30,7 +30,7 @@ for idx, k_lsm in enumerate(k):
     i = np.arange(1, n+1) # Rank of each data point
 
 
-    F = 1 - i / (n + 1) # Weibull plotting position formula
+    F = 1 - ((i - 0.3) / (n + 0.4)) # Weibull plotting position formula
 
     Y_lsm = (-np.log(1 - F))**(1/k_lsm) # Got new y for each data point
 
@@ -41,7 +41,7 @@ for idx, k_lsm in enumerate(k):
     B_lsm = np.mean(Hs) - A_lsm*np.mean(Y_lsm)
 
     Hs_plot_lsm = A_lsm*Y_lsm + B_lsm
-    relative_error_lsm = (1/n) * np.sum(np.abs((Hs_plot_lsm - Hs) / Hs)) # E = (1/n) * Σ |(estimated - observed) / observed|
+    relative_error_lsm = (1/n) * (np.sum(np.abs((Hs_plot_lsm - Hs) / Hs))) # E = (1/n) * Σ |(estimated - observed) / observed|
 
     Y.append(Y_lsm)
     A.append(A_lsm)
@@ -75,6 +75,8 @@ Y = (-np.log(1 - F))**(1/k_mlm)
 
 Hs_plot = A_mlm * Y + B_mlm
 
+relative_error_mlm = (1/n) * (np.sum(np.abs((Hs_plot - Hs) / Hs)))
+
 plt.figure()
 plt.plot(Hs_plot, Y)
 plt.plot(Hs, Y, "ro")
@@ -84,7 +86,7 @@ plt.ylabel("Y")
 plt.show()
 
 print(f"For Maximum Likelihood Method\n-----------------------------\nA: {A_mlm:.2f}, B: {B_mlm:.2f}, k: {k_mlm:.2f}")
-print(f"Relative Error: {error_mlm:.2f}%\n")
+print(f"Relative Error: {relative_error_mlm * 100:.2f}%\n")
 
 # Calculate Hs,50 and the expected maximum wave height
 
