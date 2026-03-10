@@ -98,3 +98,10 @@ print("Maximum value of Hm0 occurs at array number:", indices)
 
 Tp_to_Hm0max=Tp[indices]
 print("The matching Tp for max value of Hm0 is",Tp_to_Hm0max)
+
+
+angle=df.iloc[2:, 9].values
+angle=angle.astype(float)
+
+angle_avg=np.nanmean(angle)
+print(angle_avg)
