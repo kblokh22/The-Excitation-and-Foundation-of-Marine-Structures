@@ -23,6 +23,7 @@ df["w [%"] = w
 
 print("-"*100)
 print(" "*45, "results"," "*45)
-print(df)
+print("-"*100)
+print(df.round(2))
 print("-"*100)
 
