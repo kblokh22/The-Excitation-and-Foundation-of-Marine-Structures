@@ -2,6 +2,24 @@ import numpy as np
 import pandas as pd
 import io
 import matplotlib.pyplot as plt
+def plot_robertson_boundaries(ax):
+    """Adds Robertson (1990) SBT zones to an existing Axes."""
+    log_Fr_c, log_Qt_c = -1.22, 3.47
+    Ic_boundaries = [1.31, 2.05, 2.60, 2.95, 3.60]
+    theta = np.linspace(0, 2 * np.pi, 1000)
+
+    for Ic in Ic_boundaries:
+        Fr = 10**(log_Fr_c + Ic * np.cos(theta))
+        Qt = 10**(log_Qt_c + Ic * np.sin(theta))
+        ax.plot(Fr, Qt, 'k-', linewidth=1.0, alpha=0.6, zorder=1)
+
+    # Zone Labels
+    labels = [
+        (0.3, 300, '7'), (0.8, 80, '6'), (1.5, 30, '5'),
+        (2.5, 12, '4'), (4.5, 5, '3'), (7.0, 1.5, '2')
+    ]
+    for x, y, txt in labels:
+        ax.text(x, y, txt, fontsize=9, fontweight='bold', alpha=0.6)
 
 raw_data = """
    0.00 -0.0001  0.0000  0.0000 -1.0360  0.2928 20.0000  1.0766 
@@ -302,67 +320,252 @@ raw_data = """
    2.95 26.0422  0.0000  0.0703 -2.0496  0.9685 182.8300  2.2668 
 
 """
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 
-# Parameters
-GAMMA_SOIL = 0.02
-GAMMA_W = 0.01
-PA = 0.1
-NET_QUOTIENT = 0.8
+df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
+                 names=['Depth_m', 'Tip_MPa', 'Sleeve_MPa', 'Pore_MPa','I_x','I_y','Time_Stamp','I_res'],
+                 engine='python')
 
+# Filter out surface noise to prevent division by zero
+df = df[df['Depth_m'] > 0.2].copy()
+df = df[df['Sleeve_MPa']> 0].copy()
 
-def calculate_friction_angle(data_str):
-    df = pd.read_csv(io.StringIO(data_str.strip()), sep=r'\s+', header=None,
-                     names=['depth', 'qc', 'fs', 'u2', 'iy', 'ix', 'time', 'ires'],
-                     engine='python')
+# 2. Convert raw data to kPa immediately
+df['qt_kPa'] = df['Tip_MPa'] * 1000
+df['fs_kPa'] = df['Sleeve_MPa'] * 1000
+df['u_kPa'] = df['Pore_MPa'] * 1000
 
-    for col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
+# Constants in kPa/kN
+p_a = 100.0        # Atmospheric pressure in kPa
+gamma_w = 10.0     # Unit weight of water in kN/m3
+a_cone = 0.8       # Area ratio
 
-    df = df.dropna(subset=['qc', 'depth'])
-    df = df[df['qc'] > -9000].copy()
+# 3. Smoothing (performed on kPa values)
+df['qt_smooth'] = df['qt_kPa'].rolling(window=5, center=True).mean().fillna(df['qt_kPa'])
+df['fs_smooth'] = df['fs_kPa'].rolling(window=5, center=True).mean().fillna(df['fs_kPa'])
+df['u_smooth'] = df['u_kPa'].rolling(window=5, center=True).mean().fillna(df['u_kPa'])
 
-    df['qt'] = df['qc'] + df['u2'] * (1 - NET_QUOTIENT)
-
-    df['sigma_v0'] = df['depth'] * (GAMMA_SOIL - GAMMA_W)
-
-    df = df[df['sigma_v0'] > 0.0001].copy()
-
-
-    # phi' = 17.6 + 11 * log10( (qt/Pa) / sqrt(sigma_v0/Pa) )
-    QT1 = (df['qt'] / PA) / np.sqrt(df['sigma_v0'] / PA)
-
-    df = df[QT1 > 0].copy()
-    df['phi_degrees'] = 17.6 + 11.0 * np.log10(QT1)
-
-    return df
+df['qt_smooth'] = (df['qt_smooth']) + (df['u_smooth'] * (1 - a_cone))
+h_w = 8.5
 
 
-try:
-    results = calculate_friction_angle(raw_data)
-
-    print(f"{'Depth [m]':>10} | {'qt [MPa]':>10} | {'Phi [deg]':>10}")
-    print("-" * 38)
-
-    for _, row in results.iloc[::20].iterrows():
-        print(f"{row['depth']:10.2f} | {row['qt']:10.2f} | {row['phi_degrees']:10.1f}")
-
-    avg_phi_14 = results[results['depth'] > 0.0]['phi_degrees'].mean()
-    print(f"\nAverage Peak Friction Angle (>0.001m): {avg_phi_14:.2f}°")
-
-    var_phi = results[results['depth'] > 0.0]['phi_degrees'].var()
-    spread_phi = np.sqrt(var_phi)
-
-    print(f"\nspread Friction Angle (>0.0001m): {spread_phi:.2f}")
-    #making a graf to easylier show the chance in friction angle
-    plt.figure()
-    plt.plot(results['depth'], results['phi_degrees'],'o')
-    plt.xlabel("Depth (m)")
-    plt.ylabel("Peak Friction Angle (deg)")
-    plt.show()
+# 4. Unit Weight and Stresses
+# kulhawi and mayne 2010
+df['gamma'] = 26 - 14/(1 + (0.5 * np.log10(df['fs_smooth']+1))**2)
 
 
-except Exception as e:
-    print(f"Error processing data: {e}")
+# If above formula feels complex, a common sand default is 18-20
+df['sigma_v0'] = (df['Depth_m'] * df['gamma'])+ h_w * gamma_w
+
+# Pore Pressure: hydrostatic pressure from water surface down to depth
+df['u0'] = gamma_w * (df['Depth_m'] + h_w)
+
+# Effective Stress: This effectively becomes Depth_m * (gamma - gamma_w)
+# Notice h_w cancels out!
+df['sigma_v0_e'] = (df['sigma_v0'] - df['u0'])
 
 
+# 5. Dimensionless Parameters
+df['Q_t'] = (df['qt_smooth'] - df['sigma_v0']) / df['sigma_v0_e']
+df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0'])) * 100
+df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
+
+
+
+df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10(df['F_r']) + 1.22)**2)**0.5
+
+C2 = 2.41
+C0 = 157
+df['D_r'] = (1 / C2) * np.log(df['qt_smooth'] / (C0 * (df['sigma_v0_e'])**0.55))
+df['D_r'] = 100 * (0.268 * np.log((df['qt_smooth'] / p_a) / np.sqrt(df['sigma_v0_e'] / p_a)) - 0.675)
+
+
+
+# Friction Angle (Kulhawi & Mayne)
+df['phi_peak_KM'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
+
+
+
+alpha_m = 0.0188*(10**(0.55*df['I_c']+1.68))
+
+
+df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
+
+help = (df['qt_smooth'] / df['sigma_v0_e'])
+
+df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
+df['E_0'] = 2*df['G_0']*(1+0.3)
+
+
+#Robertson (2009/2010)
+df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
+
+
+bins = [0,1.6,1.95,3]
+labels = [0,1,2]
+
+df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=True)
+
+print(df.groupby('Layer_ID')[[ 'sigma_v0', 'sigma_v0_e', 'qt_smooth']].mean().round(2))
+
+print("--- Layer Average ---")
+print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
+
+
+
+
+
+
+
+
+
+
+
+
+df['gamma2'] = df['gamma']
+#AI plots
+from matplotlib.colors import ListedColormap
+num_colors = len(labels)
+base_cmap = plt.get_cmap('tab10')
+custom_cmap = ListedColormap(base_cmap.colors[:num_colors])
+
+# 1. Create a figure with 3 subplots (1 row, 3 columns)
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(15, 10), sharey=True)
+# Define distinct colors for the layers
+unique_layers = sorted(df['Layer_ID'].unique())
+colors = plt.cm.tab10(range(len(unique_layers)))
+for i, layer_id in enumerate(unique_layers):
+    layer_data = df[df['Layer_ID'] == layer_id]
+    if not layer_data.empty:
+        # Subplot 1: Tip Resistance (qt)
+        ax1.plot(layer_data['qt_smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2, label=f'Layer {layer_id}')
+        # Subplot 2: Sleeve Friction (ft)
+        ax2.plot(layer_data['fs_smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        # Subplot 3: Pore Pressure (u)
+        ax3.plot(layer_data['u_smooth'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        ax4.plot(layer_data['gamma2'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+ax1.invert_yaxis()
+# Labels and Titles
+ax1.set_xlabel('Tip Resistance $q_t$ [MPa]')
+ax1.set_ylabel('Depth [m]')
+ax1.set_title('Cone Resistance')
+ax2.set_xlabel('Sleeve Friction $f_t$ [MPa]')
+ax2.set_title('Sleeve Friction')
+ax3.set_xlabel('Pore Pressure $u$ [MPa]')
+ax3.set_title('Pore Pressure')
+ax4.set_xlabel('Specific weight $gamma_t$ [kN/m^2')
+ax4.set_title('Specific Weight')
+# Add Grid and Legend
+for ax in [ax1, ax2, ax3, ax4]:
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+ax1.legend(title="Soil Layers", loc='lower left')
+plt.tight_layout()
+
+
+
+
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 10), sharey=True)
+# Define distinct colors for the layers
+unique_layers = sorted(df['Layer_ID'].unique())
+colors = plt.cm.tab10(range(len(unique_layers)))
+for i, layer_id in enumerate(unique_layers):
+    layer_data = df[df['Layer_ID'] == layer_id]
+    if not layer_data.empty:
+        ax1.plot(layer_data['Q_t'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2, label=f'Layer {layer_id}')
+        ax2.plot(layer_data['F_r'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+        ax3.plot(layer_data['B_q'], layer_data['Depth_m'],
+                 color=colors[i], linewidth=2)
+ax1.invert_yaxis()
+# Labels and Titles
+ax1.set_xlabel('Normalized Cone Resistance $Q_t$ [-]')
+ax1.set_ylabel('Depth [m]')
+ax1.set_title('Normalized Cone Resistance')
+ax2.set_xlabel('Friction ratio $F_r$ [-]')
+ax2.set_title('Friction ratio')
+ax3.set_xlabel('Pore Pressure Ratio $B_q$ [-]')
+ax3.set_title('Pore Pressure Ratio')
+# Add Grid and Legend
+for ax in [ax1, ax2, ax3]:
+    ax.grid(True, which="both", ls="-", alpha=0.5)
+ax1.legend(title="Soil Layers", loc='lower left')
+plt.tight_layout()
+
+
+
+df['Layer_ID'] = df['Layer_ID'].fillna(0).astype(int)
+
+fig, ax = plt.subplots(figsize=(8, 8))
+plot_robertson_boundaries(ax)
+# 1. Use 'tab10' to match your profile plot colors
+# 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
+# 3. Use vmin and vmax to lock the color range to your known layers
+ax.scatter(df['F_r'], df['Q_t'],
+                      c=df['Layer_ID'].astype(int),
+                      cmap=custom_cmap,
+                      vmin=0,
+                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
+                      edgecolors='k',
+                      alpha=0.5)
+
+
+# Add colorbar with discrete ticks to match the layers
+# plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
+# Formatting for Robertson Chart
+ax.grid(visible=True, which="both", ls="-", alpha=0.5)
+ax.set_yscale('log')
+ax.set_xscale('log')
+ax.set_ylim(1, 10000)
+ax.set_xlim(0.1, 10)
+ax.set_xlabel('Friction Ratio $F_r$ [%]')
+ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
+
+
+
+
+
+plt.figure(figsize=(8, 6))
+# 1. Use 'tab10' to match your profile plot colors
+# 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
+# 3. Use vmin and vmax to lock the color range to your known layers
+scatter = plt.scatter(df['B_q'], df['Q_t'],
+                      c=df['Layer_ID'].astype(int),
+                      cmap=custom_cmap,
+                      vmin=0,
+                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
+                      edgecolors='k',
+                      alpha=0.5)
+# Add colorbar with discrete ticks to match the layers
+plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
+# Formatting for Robertson Chart
+plt.grid(visible=True, which="both", ls="-", alpha=0.5)
+plt.yscale('log')
+plt.ylim(1, 10000)
+plt.xlim(-0.5, 1)
+plt.xlabel('Pore Pressure Ratio $B_q$ [-]')
+plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
+
+
+plt.figure(figsize=(8, 6))
+scatter = plt.scatter(df['Depth_m'], df['phi_peak_KM'],
+                      c=df['Layer_ID'].astype(int),
+                      cmap=custom_cmap,
+                      vmin=0,
+                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
+                      edgecolors='k',
+                      alpha=0.5)
+plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
+# Formatting for Robertson Chart
+plt.grid(visible=True, which="both", ls="-", alpha=0.5)
+plt.xlabel("Depth (m)")
+plt.ylabel("Peak Friction Angle (deg)")
+plt.show()
 
