@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-df = pd.read_csv("Weather data/fetch_results.csv")
+df = pd.read_csv("../Weather data/fetch_results.csv")
 direction = df['bearing_deg'].values # Given in degrees in 3 deg intervals
 length = df['length_km'].values # Given in km
 
