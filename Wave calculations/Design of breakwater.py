@@ -1,32 +1,30 @@
 import numpy as np
 from helper_functions import waveLengthIteration
 
-# %% Known values
-g = 9.82
-h = 11.5
-Hs = 6.5
-Hm0 = 6.5
-Hmax = 11.7
-T_10 = 16.3
-Tm = 13.7
-Tp = 16.5
-Nw = 1000
+# Known values
+g = 9.82 # Gravitational acceleration [m/s^2]
+h = 11.5 # Water depth [m]
+Hs = 6.5 # Significant wave height [m]
+Hm0 = Hs # Significant wave height based on frequency spectrum. That is not used here. [m]
+T_10 = 16.3 # Spectral period [s]
+Tm = 13.7 # Mean period [s]
+Tp = 16.5 # Peak period [s]
+Nw = 1000 # Number of waves when checking for damage
 
 # Structure
-Dn50 = np.array([2, 0.9, 0.4])
-Thickness = np.array([4, 2.7])
-PermeableStructure = 1  # 1 = yes
-Gc = 3 * Dn50[0]
-q_criteria = 5
-slope_angle = np.arctan(1/2) # acot(2) is atan(1/2)
+Dn50 = np.array([2, 0.9, 0.4]) # Stone size when looking at the armour layer, filter layer and core. [m]
+Thickness = np.array([4, 2.7]) # Thickness of the armour layer and filter layer. [m]
+PermeableStructure = True  # If the breakwater is permeable to water.
+Gc = 3 * Dn50[0] # Is the width of the crest [m]
+q_criteria = 5 # The amount of water, that is allowed to over-top. [l/s per m]
+slope_angle = np.arctan(1/2) # The slope of the breakwater. np.arctan(1/2) = is a slope of 1:2.
 
-# %% Wave parameters
+# Wave parameters
 L_mDeep = (g * Tm**2) / (2 * np.pi)
 L_10Deep = (g * T_10**2) / (2 * np.pi)
 L_0pDeep = (g * Tp**2) / (2 * np.pi)
 
-k_10 = wave_number(g, T_10, h)
-L_10 = 2 * np.pi / k_10
+L_10 = waveLengthIteration(T_10, h)
 
 s_m = Hs / L_mDeep
 s_10 = Hm0 / L_10Deep
@@ -36,13 +34,13 @@ xi_m = np.tan(slope_angle) / np.sqrt(s_m)
 xi_10 = np.tan(slope_angle) / np.sqrt(s_10)
 xi_0p = np.tan(slope_angle) / np.sqrt(s_0p)
 
-# %% (1) Overtopping EurOtop
+# (1) Overtopping EurOtop
 gamma_f = 0.4
 gamma_beta = 1
 
 if xi_10 > 5:
     gamma_fmod = min(gamma_f + (xi_10 - 5) * (1 - gamma_f) / 5, 1)
-    if PermeableStructure == 1:
+    if PermeableStructure == True:
         gamma_fmod = min(gamma_fmod, 0.6)
 else:
     gamma_fmod = gamma_f
@@ -56,7 +54,7 @@ while q - q_criteria > 1e-9:
 R_cEurOtop = R_c
 print(f"R_cEurOtop: {R_cEurOtop:.4f}")
 
-# %% (2) Overtopping Eldrup
+# (2) Overtopping Eldrup
 gamma_fS = min(gamma_f + 0.05 * s_10**-0.5 - 0.07 * min(1/np.tan(slope_angle), 3) - 0.09, 1)
 Gcstar = Gc
 gamma_cw = min(1.1 * np.exp(-0.18 * Gcstar / Hm0), 1)
@@ -70,7 +68,7 @@ while q - q_criteria > 1e-9:
 R_cEldrup = R_c
 print(f"R_cEldrup: {R_cEldrup:.4f}")
 
-# %% (3) P-Estimation
+# (3) P-Estimation
 N = len(Dn50)
 zstar1 = np.zeros(N)
 zstar2 = np.zeros(N)
@@ -90,7 +88,7 @@ k_vals = (0.79 - 0.79 * np.exp(-4.1 * Dn50 / Dn50[0])) * ((np.exp(-0.62 * zstar1
 P = max(0.1, 1.72 * np.sum(k_vals) - 1.58)
 print(f"P: {P:.4f}")
 
-# %% (4) Sd
+# (4) Sd
 gamma_a = 2650
 gamma_w = 1025
 Delta = (gamma_a / gamma_w - 1)
@@ -106,7 +104,7 @@ else:
 
 print(f"S: {S:.4f}")
 
-# %% (5) Toe Damage
+# (5) Toe Damage
 tt = 2 * Dn50_A
 ht = h - tt
 Bt = 3 * Dn50_A
@@ -115,14 +113,14 @@ udelta = np.pi * Hs / T_10 * 1 / np.sinh(k_toe * ht)
 Nod = 0.032 * (tt / Hs) * (Bt / Hs)**0.3 * (Hs / (Delta * Dn50_A))**3 * (udelta / np.sqrt(g * Hs))
 print(f"Nod: {Nod:.4f}")
 
-# %% (6) Reflection
+# (6) Reflection
 KR0, KR1 = 0.2, 0.8
 gamma_refl = 3.55
 a_refl = 0.18
 Cr = (KR1 - KR0) * (1 + ((h / (L_10 * np.tan(slope_angle))) / a_refl)**gamma_refl)**-1 + KR0
 print(f"Cr: {Cr:.4f}")
 
-# %% (7) Transmission
+# (7) Transmission
 b_trans = -5.42 * s_0p + 0.0323 * Hs / Dn50_A - 0.0017 * (Gc / Dn50_A)**1.84 + 0.51
 Ct = (0.031 * Hs / Dn50_A - 0.24) * R_cEurOtop / Dn50_A + b_trans
 Ct = np.clip(Ct, 0.075, 0.75)
