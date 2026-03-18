@@ -3,7 +3,7 @@ from helper_functions import waveLengthIteration
 
 # Known values
 g = 9.82 # Gravitational acceleration [m/s^2]
-h = 11.5 # Water depth [m]
+h = 6 # Water depth [m]
 Hs = 6.5 # Significant wave height [m]
 Hm0 = Hs # Significant wave height based on frequency spectrum. That is not used here. [m]
 T_10 = 16.3 # Spectral period [s]
@@ -16,8 +16,9 @@ Dn50 = np.array([2, 0.9, 0.4]) # Stone size when looking at the armour layer, fi
 Thickness = np.array([4, 2.7]) # Thickness of the armour layer and filter layer. [m]
 PermeableStructure = True  # If the breakwater is permeable to water.
 Gc = 3 * Dn50[0] # Is the width of the crest [m]
-q_criteria = 5 # The amount of water, that is allowed to over-top. [l/s per m]
-slope_angle = np.arctan(1/2) # The slope of the breakwater. np.arctan(1/2) = is a slope of 1:2.
+q_criteria = 5*10**(-3) # The amount of water, that is allowed to over-top. [m3/s per m]
+slope=1/2 #top is y bottom is x
+slope_angle = np.arctan(slope) # The slope of the breakwater. np.arctan(1/2) = is a slope of 1:2.
 
 # Wave parameters
 L_mDeep = (g * Tm**2) / (2 * np.pi)
@@ -35,8 +36,9 @@ xi_10 = np.tan(slope_angle) / np.sqrt(s_10)
 xi_0p = np.tan(slope_angle) / np.sqrt(s_0p)
 
 # (1) Overtopping EurOtop
-gamma_f = 0.4
-gamma_beta = 1
+gamma_f = 0.45
+beta=0 #angle of attack
+gamma_beta = 1-0.0062*beta
 
 if xi_10 > 5:
     gamma_fmod = min(gamma_f + (xi_10 - 5) * (1 - gamma_f) / 5, 1)
@@ -45,8 +47,8 @@ if xi_10 > 5:
 else:
     gamma_fmod = gamma_f
 
-q = 10000000.0
-R_c = 0.0
+q = 10000000.0 #initalizer
+R_c = 0.0      #initializer
 while q - q_criteria > 1e-9:
     q = (0.09 * np.exp(-(1.5 * R_c / (Hm0 * gamma_fmod * gamma_beta))**1.3)) * np.sqrt(g * Hm0**3) * 1000
     R_c += 0.00001
