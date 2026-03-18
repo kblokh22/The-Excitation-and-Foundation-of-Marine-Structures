@@ -10,6 +10,13 @@ plt.xlabel('Date')
 plt.ylabel('Significant wave height [m]')
 plt.show()
 
+plt.figure()
+plt.plot(filtered_dates[16000:17000], filtered_waves[16000:17000])
+# plt.plot(peak_dates, peak_values, 'ro')
+plt.xlabel('Date')
+plt.ylabel('Significant wave height [m]')
+plt.show()
+
 print(f"-----------------------\nSignificant wave heights:")
 for i in range(len(peak_dates)):
     print(f"{peak_dates[i]} - {peak_values[i]} m")
