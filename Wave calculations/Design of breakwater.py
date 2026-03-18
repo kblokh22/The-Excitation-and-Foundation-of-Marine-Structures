@@ -36,7 +36,7 @@ xi_10 = np.tan(slope_angle) / np.sqrt(s_10)
 xi_0p = np.tan(slope_angle) / np.sqrt(s_0p)
 
 # (1) Overtopping EurOtop
-gamma_f = 0.45
+gamma_f = 0.4
 beta=0 #angle of attack
 gamma_beta = 1-0.0062*beta
 
@@ -127,3 +127,24 @@ b_trans = -5.42 * s_0p + 0.0323 * Hs / Dn50_A - 0.0017 * (Gc / Dn50_A)**1.84 + 0
 Ct = (0.031 * Hs / Dn50_A - 0.24) * R_cEurOtop / Dn50_A + b_trans
 Ct = np.clip(Ct, 0.075, 0.75)
 print(f"Ct: {Ct:.4f}")
+
+#Scour (slope 1:2 is safe)
+#For a breakwater with a front slope of 1:1.2 the scour protection should cover 0.15L of the seabed and for a slope of 1:1.75 the scour should cover 0.08L.
+
+''' 
+#Scour
+alpha=slope_angle*360/(2*np.pi)
+
+def f_alpha(alpha):
+    f=0.3-1.77*np.exp(-alpha/15)
+    return f
+
+S=0.0001
+
+f=f_alpha(alpha)
+print(f'f={f}')
+while S/Hs <= f / (( np.sinh(2*np.pi*h/L_10) )**1.35):
+    S=S+0.0001
+
+print(f'The breakwater scour is {S}')
+'''
