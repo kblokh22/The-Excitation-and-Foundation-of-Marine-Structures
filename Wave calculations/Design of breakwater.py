@@ -15,8 +15,8 @@ Nw = 1000 # Number of waves when checking for damage
 Dn50 = np.array([2, 0.9, 0.4]) # Stone size when looking at the armour layer, filter layer and core. [m]
 Thickness = np.array([4, 2.7]) # Thickness of the armour layer and filter layer. [m]
 PermeableStructure = True  # If the breakwater is permeable to water.
-Gc = 3 * Dn50[0] # Is the width of the crest [m]
-q_criteria = 5*10**(-3) # The amount of water, that is allowed to over-top. [m3/s per m]
+Gc = 3 * Dn50[0] # Is the width of the crest. [m]
+q_criteria = 5*10**(-3) # The amount of water that is allowed to over-top. [m3/s per m]
 slope=1/2 #top is y bottom is x
 slope_angle = np.arctan(slope) # The slope of the breakwater. np.arctan(1/2) = is a slope of 1:2.
 
@@ -42,13 +42,13 @@ gamma_beta = 1-0.0062*beta
 
 if xi_10 > 5:
     gamma_fmod = min(gamma_f + (xi_10 - 5) * (1 - gamma_f) / 5, 1)
-    if PermeableStructure == True:
+    if PermeableStructure:
         gamma_fmod = min(gamma_fmod, 0.6)
 else:
     gamma_fmod = gamma_f
 
-q = 10000000.0 #initalizer
-R_c = 0.0      #initializer
+q = 10000000.0 #initialize
+R_c = 0.0      #initialize
 while q - q_criteria > 1e-9:
     q = (0.09 * np.exp(-(1.5 * R_c / (Hm0 * gamma_fmod * gamma_beta))**1.3)) * np.sqrt(g * Hm0**3) * 1000
     R_c += 0.00001
