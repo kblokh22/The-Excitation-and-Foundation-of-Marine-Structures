@@ -50,19 +50,19 @@ OCR = sigma_pc/sigma_i
 df = pd.DataFrame()
 df['Boreholes'] = B
 df ['Depth [m]' ] = depth
-df['phi_tp [degree]'] = phi_tp
-df['phi_p [degree]'] = phi_p
-df['phi_cs [degree]'] = phi_cs
-df['alpha_p [degree]'] = alpha_p
+df['phi_tp [°]'] = phi_tp
+df['phi_p [°]'] = phi_p
+df['phi_cs [°]'] = phi_cs
+df['alpha_p [°]'] = alpha_p
 
 df1 = pd.DataFrame()
 df1['Boreholes'] = B
-df1 ['Depth [m]' ] = depth
 df1['OCR [-]'] = OCR
 df1['Void ratio [-]'] = e
 df1['w [%]'] = w
 
 df2 = pd.DataFrame()
+df2['Boreholes'] = B
 df2['Gamma_sat [kN/m^3]'] = gamma_sat
 df2['Gamma_dry [kN/m^3]'] = gamma_dry
 df2['Type'] = Test
@@ -73,10 +73,10 @@ df2['Type'] = Test
 print("-"*100)
 print(" "*45, "results"," "*45)
 print("-"*100)
-print(df)
+print(df.round(2))
 print("-"*100)
-print(df1)
+print(df1.round(2))
 print("-"*100)
-print(df2)
+print(df2.round(2))
 
 

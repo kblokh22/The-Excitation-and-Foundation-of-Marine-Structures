@@ -654,7 +654,7 @@ print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi
 print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
 
 
-
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].iloc[50:].mean().round(2))
 
 
 df['gamma2'] = df['gamma']
@@ -799,4 +799,4 @@ plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.xlabel("Depth (m)")
 plt.ylabel("Peak Friction Angle (deg)")
-
+plt.show()
