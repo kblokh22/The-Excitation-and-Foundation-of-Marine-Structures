@@ -182,7 +182,6 @@ def waveLengthIteration(wave_period, water_depth):
     Returns
     -------
     L : Final wavelength
-    n : Number of iterations performed
     """
     gravity = 9.81
 
