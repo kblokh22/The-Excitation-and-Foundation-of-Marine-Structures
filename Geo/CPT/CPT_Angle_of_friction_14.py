@@ -395,7 +395,7 @@ df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
 
 help = (df['qt_smooth'] / df['sigma_v0_e'])
 
-df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
+df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))
 df['E_0'] = 2*df['G_0']*(1+0.3)
 
 
@@ -412,9 +412,11 @@ print(df.groupby('Layer_ID')[[ 'sigma_v0', 'sigma_v0_e', 'qt_smooth']].mean().ro
 
 print("--- Layer Average ---")
 print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
-print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
 
 
+
+
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].iloc[50:].mean().round(2))
 
 
 
@@ -527,7 +529,7 @@ ax.set_ylim(1, 10000)
 ax.set_xlim(0.1, 10)
 ax.set_xlabel('Friction Ratio $F_r$ [%]')
 ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
-
+plt.show()
 
 
 
@@ -567,5 +569,5 @@ plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.xlabel("Depth (m)")
 plt.ylabel("Peak Friction Angle (deg)")
-plt.show()
+
 
