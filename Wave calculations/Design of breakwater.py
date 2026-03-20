@@ -91,8 +91,8 @@ P = max(0.1, 1.72 * np.sum(k_vals) - 1.58)
 print(f"P: {P:.4f}")
 
 # (4) Sd
-gamma_a = 2650
-gamma_w = 1025
+gamma_a = 2650*9.82
+gamma_w = 1025*9.82
 Delta = (gamma_a / gamma_w - 1)
 Dn50_A = Dn50[0]
 
@@ -148,3 +148,40 @@ while S/Hs <= f / (( np.sinh(2*np.pi*h/L_10) )**1.35):
 
 print(f'The breakwater scour is {S}')
 '''
+
+#Stability
+Ns=Hs / (Delta*Dn50[0])
+print(f'Ns: {Ns:.4f}')
+if 1 < Ns < 4:
+    print(f'Rubble-mound is stable')
+else:
+    print(f'Rubble-mound is unstable')
+
+
+#Sliding
+C=1 # guess so far
+rho_a=gamma_a/9.82
+rho_w=gamma_w/9.82
+H=Hs
+KD=3 #made from rocks
+alpha=slope_angle*360/(2*np.pi)
+
+def cot(x):
+    cotan=1/np.tan(x)
+    return cotan
+
+M=(rho_a*H**3) / (KD*(rho_a/rho_w - 1)**3 * cot(alpha))
+mu=0.7
+side1=(rho_a*H**3) / (M*(rho_a/rho_w - 1)**3 * cot(alpha))
+side2=(1/(C**3 * cot(alpha)))*( (mu*np.cos(alpha)-np.sin(alpha))/(np.cos(beta)+mu*np.sin(beta)) )**3
+
+
+
+
+if side1 <= side2:
+    print('No sliding occurs')
+elif side1 > side2:
+    print('Sliding occurs')
+elif side1 < 0:
+    print('Negative result (error)')
+
