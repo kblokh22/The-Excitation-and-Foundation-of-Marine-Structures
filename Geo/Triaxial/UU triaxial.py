@@ -27,6 +27,6 @@ print("-"*100)
 print(df.round(2))
 print("-"*100)
 
-val = df["c_u [kPa]"].mean() - 1.645*df["c_u [kPa]"].std()
+val = df["c_u [kPa]"].iloc[1:].mean() - 1.645*df["c_u [kPa]"].iloc[1:].std()
 print(val)
 print("-"*100)

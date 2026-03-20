@@ -395,9 +395,9 @@ df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
 
 help = (df['qt_smooth'] / df['sigma_v0_e'])
 
-df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))
+df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
 df['E_0'] = 2*df['G_0']*(1+0.3)
-
+print(df['E_0'])
 
 #Robertson (2009/2010)
 df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
