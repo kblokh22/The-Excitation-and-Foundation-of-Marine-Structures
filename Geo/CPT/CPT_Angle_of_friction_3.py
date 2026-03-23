@@ -606,9 +606,12 @@ df['sigma_v0_e'] = (df['sigma_v0'] - df['u0'])
 
 # 5. Dimensionless Parameters
 df['Q_t'] = (df['qt_smooth'] - df['sigma_v0']) / df['sigma_v0_e']
-df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0'])) * 100
+df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0']))*100
 df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
 
+
+
+Q_t1 = ((df['qt_smooth']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
 
 
 df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10(df['F_r']) + 1.22)**2)**0.5

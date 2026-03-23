@@ -355,7 +355,6 @@ h_w = 8.5
 # kulhawi and mayne 2010
 df['gamma'] = 26 - 14/(1 + (0.5 * np.log10(df['fs_smooth']+1))**2)
 
-
 # If above formula feels complex, a common sand default is 18-20
 df['sigma_v0'] = (df['Depth_m'] * df['gamma'])+ h_w * gamma_w
 
@@ -369,12 +368,13 @@ df['sigma_v0_e'] = (df['sigma_v0'] - df['u0'])
 
 # 5. Dimensionless Parameters
 df['Q_t'] = (df['qt_smooth'] - df['sigma_v0']) / df['sigma_v0_e']
-df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0'])) * 100
+df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0']))*100
 df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
 
+Q_t1 = ((df['qt_smooth']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
 
 
-df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10(df['F_r']) + 1.22)**2)**0.5
+df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10((df['F_r'])) + 1.22)**2)**0.5
 
 C2 = 2.41
 C0 = 157
@@ -384,7 +384,7 @@ df['D_r'] = 100 * (0.268 * np.log((df['qt_smooth'] / p_a) / np.sqrt(df['sigma_v0
 
 
 # Friction Angle (Kulhawi & Mayne)
-df['phi_peak_KM'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
+df['phi_peak_KM'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / (np.sqrt(df['sigma_v0_e']/p_a)) )
 
 
 
@@ -396,8 +396,8 @@ df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
 help = (df['qt_smooth'] / df['sigma_v0_e'])
 
 df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
+
 df['E_0'] = 2*df['G_0']*(1+0.3)
-print(df['E_0'])
 
 #Robertson (2009/2010)
 df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
@@ -525,11 +525,10 @@ ax.scatter(df['F_r'], df['Q_t'],
 ax.grid(visible=True, which="both", ls="-", alpha=0.5)
 ax.set_yscale('log')
 ax.set_xscale('log')
-ax.set_ylim(1, 10000)
+ax.set_ylim(1, 1000)
 ax.set_xlim(0.1, 10)
 ax.set_xlabel('Friction Ratio $F_r$ [%]')
 ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
-plt.show()
 
 
 
@@ -569,5 +568,5 @@ plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.xlabel("Depth (m)")
 plt.ylabel("Peak Friction Angle (deg)")
-
+plt.show()
 
