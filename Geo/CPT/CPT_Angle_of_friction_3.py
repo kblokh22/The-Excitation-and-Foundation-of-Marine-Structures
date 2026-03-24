@@ -3,6 +3,7 @@ import pandas as pd
 import io
 import matplotlib.pyplot as plt
 
+
 def plot_robertson_boundaries(ax):
     """Adds Robertson (1990) SBT zones to an existing Axes."""
     log_Fr_c, log_Qt_c = -1.22, 3.47
@@ -566,7 +567,7 @@ df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
                  engine='python')
 
 # Filter out surface noise to prevent division by zero
-df = df[df['Depth_m'] > 0.2].copy()
+df = df[df['Depth_m'] > 0.5].copy()
 df = df[df['Sleeve_MPa']> 0].copy()
 
 # 2. Convert raw data to kPa immediately
@@ -611,10 +612,19 @@ df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
 
 
 
-Q_t1 = ((df['qt_smooth']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
+def calculate_ic_vectorized(qt, fr, sigma_v0, sigma_v0_eff, p_a=100):
+    n = np.ones_like(qt)
+    ic = np.zeros_like(qt)
+    for _ in range(20):
+        q_tn = ((qt - sigma_v0) / p_a) / ((sigma_v0_eff / p_a) ** n)
+        q_tn = np.maximum(q_tn, 0.01)
+        ic = np.sqrt((3.47 - np.log10(q_tn)) ** 2 + (1.22 + np.log10(fr)) ** 2)
+        n = 0.381 * ic + 0.05 * (sigma_v0_eff / p_a) - 0.15
+    return ic, n
 
+df['I_c'], df['n'] = calculate_ic_vectorized(df['qt_smooth'], df['F_r'], df['sigma_v0'], df['sigma_v0_e'], p_a=100)
 
-df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10(df['F_r']) + 1.22)**2)**0.5
+Q_tn = ((df['qt_smooth']-df['sigma_v0'])/p_a)/(df['sigma_v0_e']/p_a)**df['n']
 
 C2 = 2.41
 C0 = 157
@@ -624,7 +634,7 @@ df['D_r'] = 100 * (0.268 * np.log((df['qt_smooth'] / p_a) / np.sqrt(df['sigma_v0
 
 
 # Friction Angle (Kulhawi & Mayne)
-df['phi_peak_KM'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
+df['phi_peak_KM3'] = 17.6 + 11.0 * np.log10( (df['qt_smooth']/p_a) / np.sqrt(df['sigma_v0_e']/p_a) )
 
 
 
@@ -655,11 +665,14 @@ df['Layer_ID'] = pd.cut(df['Depth_m'], bins=bins, labels=labels, include_lowest=
 print(df.groupby('Layer_ID')[[ 'sigma_v0', 'sigma_v0_e', 'qt_smooth']].mean().round(2))
 
 print("--- Layer Average ---")
-print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
-print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].mean().round(2))
+print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM3']].mean().round(2))
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM3']].mean().round(2))
 
 
-print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM']].iloc[50:].mean().round(2))
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM3']].iloc[50:].mean().round(2))
+
+
+phi_peak_KM3 = df['phi_peak_KM3']
 
 
 df['gamma2'] = df['gamma']
@@ -745,7 +758,7 @@ plot_robertson_boundaries(ax)
 # 1. Use 'tab10' to match your profile plot colors
 # 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
 # 3. Use vmin and vmax to lock the color range to your known layers
-ax.scatter(df['F_r'], df['Q_t'],
+ax.scatter(df['F_r'], Q_tn,
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
                       vmin=0,
@@ -760,7 +773,7 @@ ax.scatter(df['F_r'], df['Q_t'],
 ax.grid(visible=True, which="both", ls="-", alpha=0.5)
 ax.set_yscale('log')
 ax.set_xscale('log')
-ax.set_ylim(1, 10000)
+ax.set_ylim(1, 1000)
 ax.set_xlim(0.1, 10)
 ax.set_xlabel('Friction Ratio $F_r$ [%]')
 ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
@@ -773,7 +786,7 @@ plt.figure(figsize=(8, 6))
 # 1. Use 'tab10' to match your profile plot colors
 # 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
 # 3. Use vmin and vmax to lock the color range to your known layers
-scatter = plt.scatter(df['B_q'], df['Q_t'],
+scatter = plt.scatter(df['B_q'], Q_tn,
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
                       vmin=0,
@@ -785,14 +798,14 @@ plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 # Formatting for Robertson Chart
 plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.yscale('log')
-plt.ylim(1, 10000)
+plt.ylim(1, 1000)
 plt.xlim(-0.5, 1)
 plt.xlabel('Pore Pressure Ratio $B_q$ [-]')
 plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
 
 
 plt.figure(figsize=(8, 6))
-scatter = plt.scatter(df['Depth_m'], df['phi_peak_KM'],
+scatter = plt.scatter(df['Depth_m'], df['phi_peak_KM3'],
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
                       vmin=0,
