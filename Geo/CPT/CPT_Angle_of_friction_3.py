@@ -606,9 +606,12 @@ df['sigma_v0_e'] = (df['sigma_v0'] - df['u0'])
 
 # 5. Dimensionless Parameters
 df['Q_t'] = (df['qt_smooth'] - df['sigma_v0']) / df['sigma_v0_e']
-df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0'])) * 100
+df['F_r'] = (df['fs_smooth'] / (df['qt_smooth'] - df['sigma_v0']))*100
 df['B_q'] = (df['u_smooth'] - df['u0']) / (df['qt_smooth'] - df['sigma_v0'])
 
+
+
+Q_t1 = ((df['qt_smooth']-df['sigma_v0'])/p_a)*(p_a/df['sigma_v0_e'])**1
 
 
 df['I_c'] = ((3.47 - np.log10(df['Q_t']))**2 + (np.log10(df['F_r']) + 1.22)**2)**0.5
@@ -634,6 +637,8 @@ help = (df['qt_smooth'] / df['sigma_v0_e'])
 
 df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
 df['E_0'] = 2*df['G_0']*(1+0.3)
+
+print()
 
 
 #Robertson (2009/2010)
