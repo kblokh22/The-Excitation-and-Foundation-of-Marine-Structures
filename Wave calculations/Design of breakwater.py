@@ -164,7 +164,9 @@ rho_a=gamma_a/9.82
 rho_w=gamma_w/9.82
 H=Hs
 KD=3 #made from rocks
-alpha=slope_angle*360/(2*np.pi)
+
+alpha=slope_angle
+print(f'slope_angle: {slope_angle:.4f}')
 
 def cot(x):
     cotan=1/np.tan(x)
@@ -175,9 +177,8 @@ mu=0.7
 side1=(rho_a*H**3) / (M*(rho_a/rho_w - 1)**3 * cot(alpha))
 side2=(1/(C**3 * cot(alpha)))*( (mu*np.cos(alpha)-np.sin(alpha))/(np.cos(beta)+mu*np.sin(beta)) )**3
 
-
-
-
+print(side1)
+print(side2)
 if side1 <= side2:
     print('No sliding occurs')
 elif side1 > side2:
