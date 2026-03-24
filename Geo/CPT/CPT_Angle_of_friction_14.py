@@ -346,8 +346,7 @@ a_cone = 0.8       # Area ratio
 df['qt_smooth'] = df['qt_kPa'].rolling(window=5, center=True).mean().fillna(df['qt_kPa'])
 df['fs_smooth'] = df['fs_kPa'].rolling(window=5, center=True).mean().fillna(df['fs_kPa'])
 df['u_smooth'] = df['u_kPa'].rolling(window=5, center=True).mean().fillna(df['u_kPa'])
-
-df['qt_smooth'] = (df['qt_smooth']) + (df['u_smooth'] * (1 - a_cone))
+df['qt_smooth'] = (df['qt_smooth'])
 h_w = 8.5
 
 
@@ -396,8 +395,15 @@ df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
 help = (df['qt_smooth'] / df['sigma_v0_e'])
 
 df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
-
 df['E_0'] = 2*df['G_0']*(1+0.3)
+
+
+
+plt.figure()
+plt.plot(df['Depth_m'],df['E_0'])
+plt.grid(True)
+
+
 
 #Robertson (2009/2010)
 df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
