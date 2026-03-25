@@ -567,7 +567,7 @@ df = pd.read_csv(io.StringIO(raw_data.strip()), sep=r'\s+', header=None,
                  engine='python')
 
 # Filter out surface noise to prevent division by zero
-df = df[df['Depth_m'] > 0.5].copy()
+df = df[df['Depth_m'] > 0.2].copy()
 df = df[df['Sleeve_MPa']> 0].copy()
 
 # 2. Convert raw data to kPa immediately
@@ -617,7 +617,6 @@ def calculate_ic_vectorized(qt, fr, sigma_v0, sigma_v0_eff, p_a=100):
     ic = np.zeros_like(qt)
     for _ in range(20):
         q_tn = ((qt - sigma_v0) / p_a) / ((sigma_v0_eff / p_a) ** n)
-        q_tn = np.maximum(q_tn, 0.01)
         ic = np.sqrt((3.47 - np.log10(q_tn)) ** 2 + (1.22 + np.log10(fr)) ** 2)
         n = 0.381 * ic + 0.05 * (sigma_v0_eff / p_a) - 0.15
     return ic, n
@@ -753,55 +752,6 @@ plt.tight_layout()
 
 df['Layer_ID'] = df['Layer_ID'].fillna(0).astype(int)
 
-fig, ax = plt.subplots(figsize=(8, 8))
-plot_robertson_boundaries(ax)
-# 1. Use 'tab10' to match your profile plot colors
-# 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
-# 3. Use vmin and vmax to lock the color range to your known layers
-ax.scatter(df['F_r'], Q_tn,
-                      c=df['Layer_ID'].astype(int),
-                      cmap=custom_cmap,
-                      vmin=0,
-                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
-                      edgecolors='k',
-                      alpha=0.5)
-
-
-# Add colorbar with discrete ticks to match the layers
-# plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
-# Formatting for Robertson Chart
-ax.grid(visible=True, which="both", ls="-", alpha=0.5)
-ax.set_yscale('log')
-ax.set_xscale('log')
-ax.set_ylim(1, 1000)
-ax.set_xlim(0.1, 10)
-ax.set_xlabel('Friction Ratio $F_r$ [%]')
-ax.set_ylabel('Normalized Cone Resistance $Q_t$ [-]')
-
-
-
-
-
-plt.figure(figsize=(8, 6))
-# 1. Use 'tab10' to match your profile plot colors
-# 2. Ensure Layer_ID is cast to int so index 0 = Blue, 1 = Orange, etc.
-# 3. Use vmin and vmax to lock the color range to your known layers
-scatter = plt.scatter(df['B_q'], Q_tn,
-                      c=df['Layer_ID'].astype(int),
-                      cmap=custom_cmap,
-                      vmin=0,
-                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
-                      edgecolors='k',
-                      alpha=0.5)
-# Add colorbar with discrete ticks to match the layers
-plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
-# Formatting for Robertson Chart
-plt.grid(visible=True, which="both", ls="-", alpha=0.5)
-plt.yscale('log')
-plt.ylim(1, 1000)
-plt.xlim(-0.5, 1)
-plt.xlabel('Pore Pressure Ratio $B_q$ [-]')
-plt.ylabel('Normalized Cone Resistance $Q_t$ [-]')
 
 
 plt.figure(figsize=(8, 6))
@@ -817,4 +767,73 @@ plt.colorbar(scatter, label='Layer ID', ticks=range(len(df['Layer_ID'])))
 plt.grid(visible=True, which="both", ls="-", alpha=0.5)
 plt.xlabel("Depth (m)")
 plt.ylabel("Peak Friction Angle (deg)")
+
+
+#code til robersen plot
+Xf = -1.22
+Yf = 3.47
+Ic_boundaries = [3.60, 2.95, 2.60, 2.05, 1.31]
+
+Fr_vals = np.logspace(-1, 1, 1000)
+log_Fr = np.log10(Fr_vals)
+
+plt.figure(figsize=(9, 9))
+
+Qtn_Z1_limit = 12 * np.exp(-1.4 * Fr_vals)
+
+Fr_stiff = np.linspace(0.6, 10, 1000)
+denom = 0.005*(Fr_stiff - 1) - 0.0003*(Fr_stiff - 1)**2 - 0.002
+Qtn_stiff_limit = np.divide(1, denom, out=np.full_like(denom, 1000), where=denom>0)
+
+for Ic in Ic_boundaries:
+    val = Ic**2 - (log_Fr - Xf)**2
+    mask = val >= 0
+
+    current_Qtn = 10**(Yf - np.sqrt(val[mask]))
+    current_Fr = Fr_vals[mask]
+    limit_Z1 = 12 * np.exp(-1.4 * current_Fr)
+
+    limit_stiff = np.interp(current_Fr, Fr_stiff, Qtn_stiff_limit)
+
+    valid_indices = (current_Qtn > limit_Z1) & (current_Qtn < limit_stiff)
+
+    plt.plot(current_Fr[valid_indices], current_Qtn[valid_indices],
+             color='orange', linewidth=1.5, alpha=0.8)
+
+    if any(valid_indices):
+        plt.text(current_Fr[valid_indices][-1], current_Qtn[valid_indices][-1],
+                 f' $I_c={Ic}$', fontsize=15, va='top')
+
+plt.plot(Fr_vals, Qtn_Z1_limit, 'r-', linewidth=2, label='Zone 1 (Sensitive)')
+plt.plot(Fr_stiff, Qtn_stiff_limit, 'g-', linewidth=2, label='Zone 8/9 (Stiff)')
+plt.scatter(df['F_r'], Q_tn,
+                      c=df['Layer_ID'].astype(int),
+                      cmap=custom_cmap,
+                      vmin=0,
+                      vmax=num_colors-1, # tab10 has 10 colors (0-9)
+                      edgecolors='k',
+                      alpha=0.5)
+
+plt.xscale('log')
+plt.yscale('log')
+plt.xlim(0.1, 10)
+plt.ylim(1, 1000)
+
+plt.xlabel(r'Normalized Friction Ratio $F_r$ (%)', fontsize=12)
+plt.ylabel(r'Normalized Cone Resistance $Q_{tn}$', fontsize=12)
+plt.title('Classification Chart', fontsize=14, pad=15)
+
+# Zone Text Labels
+plt.text(3, 1.5, 'Organic soils(2)', fontsize=13, fontweight='bold')
+plt.text(0.2,2, 'Sensitive Clays (1)', fontsize=13, fontweight='bold')
+plt.text(2, 4, 'Clays (3)', fontsize=13, fontweight='bold')
+plt.text(2, 17, 'Silt Mix (4)', fontsize=13, fontweight='bold')
+plt.text(1, 50, 'Sand Mix (5)', fontsize=13, fontweight='bold')
+plt.text(0.6, 150, 'Sands (6)', fontsize=13, fontweight='bold')
+plt.text(0.2, 400, 'Gravelly\nSands (7)', fontsize=13, fontweight='bold')
+plt.text(3, 400, 'OC soil (8 & 9)', fontsize=13, fontweight='bold')
+
+plt.grid(True, which='both', linestyle='--', alpha=0.4)
+
+plt.tight_layout()
 plt.show()
