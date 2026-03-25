@@ -1,6 +1,8 @@
 import numpy as np
 from helper_functions import waveLengthIteration
 
+print("mikkel har en fodfetish...")
+
 # Known values
 g = 9.82 # Gravitational acceleration [m/s^2]
 h = 6 # Water depth [m]
@@ -185,4 +187,15 @@ elif side1 > side2:
     print('Sliding occurs')
 elif side1 < 0:
     print('Negative result (error)')
+
+#Toe stability
+T_m1=T_10
+t_t=1
+h_t=h-t_t
+B_t=4*Dn50[1]
+
+k=2*np.pi / (9.82/(2*np.pi) * T_m1**2)
+mu_s=np.pi*Hs / T_m1 * 1 / np.sinh(k*h_t)
+N_OD=0.032*(t_t/Hs)*(B_t/Hs)**0.3 * (Hs/(Delta*Dn50[1]))**3 * (mu_s/np.sqrt(9.82*Hs))
+print(f"N_OD: {N_OD:.2f}")
 
