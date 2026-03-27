@@ -74,7 +74,48 @@ for i in range(len(Names)):
 ########################################################################################
 
 #Zero down crossing analysis
+# 2. Using the down-crossing method to calculate H_max,
+# T_Hmax, H_1/250, T_1/250, H_1/100, H_1/3, T_H1/3, H_mean,
+# T_mean, H_rms of signal.mat;
 
+eta = signal - np.mean(signal)
+crossings = np.where((eta[:-1] > 0) & (eta[1:] <= 0))[0]
+
+wave_heights = []
+wave_periods = []
+
+for i in range(len(crossings) - 1):
+    start = crossings[i]
+    end = crossings[i + 1]
+
+    wave = eta[start:end]
+    H = wave.max() - wave.min()
+    T = (end - start) / fs
+
+    wave_heights.append(H)
+    wave_periods.append(T)
+
+wave_heights = np.array(wave_heights)
+wave_periods = np.array(wave_periods)
+
+wave_heights_sorted = np.sort(wave_heights)
+wave_periods_sorted = wave_periods[np.argsort(wave_heights)]
+
+H_max = wave_heights.max()
+T_Hmax = wave_periods[wave_heights.argmax()]
+
+H_1_250 = wave_heights_sorted[-floor(len(wave_heights_sorted)/250):].mean()
+T_1_250 = wave_periods_sorted[-floor(len(wave_periods_sorted)/250):].mean()
+
+H_1_100 = wave_heights_sorted[-floor(len(wave_heights_sorted)/100):].mean()
+
+H_1_3 = wave_heights_sorted[-floor(len(wave_heights_sorted)/3):].mean()
+T_H1_3 = wave_periods_sorted[-floor(len(wave_periods_sorted)/3):].mean()
+
+H_mean = np.mean(wave_heights)
+T_mean = np.mean(wave_periods)
+
+H_rms = np.sqrt(np.mean(np.square(wave_heights)))
 
 #Keep show in bottom
 plt.show()
