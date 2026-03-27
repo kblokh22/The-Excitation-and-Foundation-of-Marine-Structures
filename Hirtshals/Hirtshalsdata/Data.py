@@ -4,13 +4,13 @@ import numpy as np
 from datetime import datetime, timezone
 import matplotlib.pyplot as plt
 
-
+#Load data
 def csv_to_vars(Names, DirectoryAndName, Coloumns, FirstRow):
     df = pd.read_csv(DirectoryAndName, header=None)
     caller_globals = inspect.currentframe().f_back.f_globals
 
     for i in range(len(Names)):
-        caller_globals[Names[i]] = df.iloc[FirstRow:, Coloumns[i]].values
+        caller_globals[Names[i]] = df.iloc[FirstRow:, Coloumns[i]].to_numpy(dtype=float, copy=True)
 
 
 
@@ -32,9 +32,21 @@ FirstRow=0
 
 for i in range(len(Names)):
     csv_to_vars(Names[:][i], DirectoryAndName[i][0], Coloumns, FirstRow)
+########################################################################################
+
+#Remove invalid data points and move mean to 0:
+dist=[dist1,dist2,dist3,dist4,dist5,dist6,dist7,dist10]
+for d in dist:
+    d[d <= 0] = np.nan
+    d[d > np.nanmean(d)*1.5] = np.nan
+    d[d < np.nanmean(d) * (-1.5)] = np.nan
 
 
-#Converts the time array from unix to real time
+for d in dist:
+    d-=np.nanmean(d)
+########################################################################################
+
+#Convert the time array from unix to real time
 for i in range(len(Names)):
     time_array = globals()[Names[i][2]]
     converted = [
@@ -43,9 +55,26 @@ for i in range(len(Names)):
     ]
     globals()[Names[i][2]] = np.array(converted)
 
+time = [time1, time2, time3, time4, time5, time6, time7, time10]
+########################################################################################
+
+#Plot
+location=['Location 1', 'Location 2', 'Location 3', 'Location 4', 'Location 5', 'Location 6', 'Location 7', 'Location 10']
+
 for i in range(len(Names)):
-    plt.figure()
+    plt.figure(i)
     t = globals()[Names[i][0]]
+    t = t - t[0]
     dist = globals()[Names[i][1]]
     plt.plot(t,dist)
-    plt.show()
+    plt.title(f'{location[i]}, {time[i][0]} to {time[i][-1]}')
+
+
+
+########################################################################################
+
+#Zero down crossing analysis
+
+
+#Keep show in bottom
+plt.show()
