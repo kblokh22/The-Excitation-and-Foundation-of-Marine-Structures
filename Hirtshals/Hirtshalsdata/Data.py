@@ -3,6 +3,7 @@ import inspect
 import numpy as np
 from datetime import datetime, timezone
 import matplotlib.pyplot as plt
+from math import floor
 
 #Load data
 def csv_to_vars(Names, DirectoryAndName, Coloumns, FirstRow):
@@ -74,48 +75,44 @@ for i in range(len(Names)):
 ########################################################################################
 
 #Zero down crossing analysis
-# 2. Using the down-crossing method to calculate H_max,
-# T_Hmax, H_1/250, T_1/250, H_1/100, H_1/3, T_H1/3, H_mean,
-# T_mean, H_rms of signal.mat;
 
-eta = signal - np.mean(signal)
-crossings = np.where((eta[:-1] > 0) & (eta[1:] <= 0))[0]
+results = {}
 
-wave_heights = []
-wave_periods = []
+for i in range(len(Names)):
+    eta = globals()[Names[i][1]]
+    t_målt = globals()[Names[i][0]]
 
-for i in range(len(crossings) - 1):
-    start = crossings[i]
-    end = crossings[i + 1]
+    mask = ~np.isnan(eta)
+    eta = eta[mask]
+    t_målt = t_målt[mask]
 
-    wave = eta[start:end]
-    H = wave.max() - wave.min()
-    T = (end - start) / fs
+    crossings = np.where((eta[:-1] > 0) & (eta[1:] <= 0))[0]
 
-    wave_heights.append(H)
-    wave_periods.append(T)
+    wave_heights = []
+    wave_periods = []
 
-wave_heights = np.array(wave_heights)
-wave_periods = np.array(wave_periods)
+    for j in range(len(crossings) - 1):
+        start = crossings[j]
+        end = crossings[j + 1]
 
-wave_heights_sorted = np.sort(wave_heights)
-wave_periods_sorted = wave_periods[np.argsort(wave_heights)]
+        wave = eta[start:end]
+        H = wave.max() - wave.min()
 
-H_max = wave_heights.max()
-T_Hmax = wave_periods[wave_heights.argmax()]
+        T = t_målt[end] - t_målt[start]
 
-H_1_250 = wave_heights_sorted[-floor(len(wave_heights_sorted)/250):].mean()
-T_1_250 = wave_periods_sorted[-floor(len(wave_periods_sorted)/250):].mean()
+        wave_heights.append(H)
+        wave_periods.append(T)
 
-H_1_100 = wave_heights_sorted[-floor(len(wave_heights_sorted)/100):].mean()
+    results[location[i]] = {
+        'wave_heights': np.array(wave_heights),
+        'wave_periods': np.array(wave_periods)
+    }
 
-H_1_3 = wave_heights_sorted[-floor(len(wave_heights_sorted)/3):].mean()
-T_H1_3 = wave_periods_sorted[-floor(len(wave_periods_sorted)/3):].mean()
+#Example of use of the result: results['Location 3']['wave_periods'] gives the array of wave periods of location 3 in chronological order
 
-H_mean = np.mean(wave_heights)
-T_mean = np.mean(wave_periods)
 
-H_rms = np.sqrt(np.mean(np.square(wave_heights)))
+
+
 
 #Keep show in bottom
 plt.show()
