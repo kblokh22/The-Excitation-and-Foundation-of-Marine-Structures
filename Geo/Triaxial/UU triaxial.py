@@ -19,7 +19,7 @@ df["depth [m]"] = depth
 df["q [kPa]"] = q
 df["varep [%]"] = varep
 df["c_u [kPa]"] = c_u
-df["w [%"] = w
+df["w [%]"] = w
 
 print("-"*100)
 print(" "*45, "results"," "*45)
@@ -29,4 +29,6 @@ print("-"*100)
 
 val = df["c_u [kPa]"].iloc[1:].mean() - 1.645*df["c_u [kPa]"].iloc[1:].std()
 print(val)
+c_d = val/1.8
+print(df["c_u [kPa]"].iloc[1:].mean())
 print("-"*100)
