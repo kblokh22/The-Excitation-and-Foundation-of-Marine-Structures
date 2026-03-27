@@ -112,7 +112,5 @@ for i in range(len(Names)):
 
 
 
-
-
 #Keep show in bottom
 plt.show()
