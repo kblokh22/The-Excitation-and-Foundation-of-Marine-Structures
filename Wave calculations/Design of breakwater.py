@@ -1,8 +1,6 @@
 import numpy as np
 from helper_functions import waveLengthIteration
 
-print("mikkel har en fodfetish...")
-
 # Known values
 g = 9.82 # Gravitational acceleration [m/s^2]
 h = 6 # Water depth [m]
@@ -154,6 +152,14 @@ print(f'The breakwater scour is {S}')
 #Stability
 Ns=Hs / (Delta*Dn50[0])
 print(f'Ns: {Ns:.4f}')
+
+dn50_max = Hs / (Delta * 1)
+
+dn50_min = Hs / (Delta * 4)
+
+print(f"Dn50 must be between {dn50_min:.3f} m and {dn50_max:.3f} m")
+
+print(f'The armour unit Dn50 is {Dn50[0]} m')
 if 1 < Ns < 4:
     print(f'Rubble-mound is stable')
 else:
@@ -198,4 +204,37 @@ k=2*np.pi / (9.82/(2*np.pi) * T_m1**2)
 mu_s=np.pi*Hs / T_m1 * 1 / np.sinh(k*h_t)
 N_OD=0.032*(t_t/Hs)*(B_t/Hs)**0.3 * (Hs/(Delta*Dn50[1]))**3 * (mu_s/np.sqrt(9.82*Hs))
 print(f"N_OD: {N_OD:.2f}")
+
+# Thickness of the layers according to the US army coastal engineering manual
+# (Page VI-5-135)
+
+# Conversion from weight to diameter
+
+n = 2           # number of quarrystone
+k_delta = 1     # Layer coefficient
+w_a = gamma_a      # Specific weight of the quarrystone
+D_sieve = np.array([2, 2/10])     # Diameter of the stone to be investigated
+W = 0.6575162324 * w_a * D_sieve**3         # weight of the individual quarrystone
+
+r = n * k_delta * ( W / w_a )**(1/3)
+
+for idx, r_i in enumerate(r):
+    print(f"Thickness of layer {idx+1}: {r_i:.4f}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
