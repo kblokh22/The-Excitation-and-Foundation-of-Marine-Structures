@@ -79,4 +79,10 @@ print(df1.round(2))
 print("-"*100)
 print(df2.round(2))
 
+import scipy.stats as stats
 
+phi_mu = np.mean(df['phi_p [°]'])
+phi_std = np.std(df['phi_p [°]'])
+phi_c = stats.norm.ppf(0.05, loc=phi_mu, scale=phi_std)
+phi_d = np.degrees(np.arctan(np.tan(np.radians(phi_c)) / 1.2))
+print(phi_d)

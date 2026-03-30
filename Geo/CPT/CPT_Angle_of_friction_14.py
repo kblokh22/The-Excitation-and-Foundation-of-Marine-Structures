@@ -399,10 +399,6 @@ df['G_0'] = 1634*(df['qt_smooth']/(np.sqrt(df['sigma_v0_e'])))**(-0.75)*df['qt_s
 df['E_0'] = 2*df['G_0']*(1+0.3)
 
 
-plt.figure()
-plt.plot(df['G_0'],df['Depth_m'])
-plt.plot(df['G_022'],df['Depth_m'])
-plt.show()
 
 OCR = 1
 df['K_0'] = 1-np.sin(np.radians(df['phi_peak_KM14']))*OCR**(1-np.sin(np.radians(df['phi_peak_KM14'])))
@@ -428,8 +424,6 @@ print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi
 print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','K_0','gamma','psi','phi_peak_KM14']].iloc[50:].mean().round(2))
 
 phi_peak_KM14 = df['phi_peak_KM14']
-
-
 
 
 

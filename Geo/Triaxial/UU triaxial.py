@@ -30,5 +30,5 @@ print("-"*100)
 val = df["c_u [kPa]"].iloc[1:].mean() - 1.645*df["c_u [kPa]"].iloc[1:].std()
 print(val)
 c_d = val/1.8
-print(df["c_u [kPa]"].iloc[1:].mean())
+print(c_d)
 print("-"*100)
