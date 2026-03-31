@@ -4,10 +4,10 @@ from helper_functions import waveLengthIteration
 # Known values
 g = 9.82 # Gravitational acceleration [m/s^2]
 h = 6 # Water depth [m]
-Hs = 6.5 # Significant wave height [m]
+Hs = 5.84 # Significant wave height [m]
 Hm0 = Hs # Significant wave height based on frequency spectrum. That is not used here. [m]
-T_10 = 16.3 # Spectral period [s]
-Tm = 13.7 # Mean period [s]
+T_10 = 12.7 # Spectral period [s]
+Tm = 12.7 # Mean period [s]
 Nw = 1000 # Number of waves when checking for damage
 
 # Structure
