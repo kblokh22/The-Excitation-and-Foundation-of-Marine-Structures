@@ -395,10 +395,13 @@ df['M'] = alpha_m*(df['qt_smooth']-df['sigma_v0'])
 
 help = (df['qt_smooth'] / df['sigma_v0_e'])
 
-df['G_0'] = (1634*(df['qt_smooth']/np.sqrt(df['sigma_v0_e']))**(-0.75))*df['qt_smooth']
+df['G_0'] = 1634*(df['qt_smooth']/(np.sqrt(df['sigma_v0_e'])))**(-0.75)*df['qt_smooth']
 df['E_0'] = 2*df['G_0']*(1+0.3)
 
 
+
+OCR = 1
+df['K_0'] = 1-np.sin(np.radians(df['phi_peak_KM14']))*OCR**(1-np.sin(np.radians(df['phi_peak_KM14'])))
 
 
 #Robertson (2009/2010)
@@ -418,11 +421,9 @@ print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi
 
 
 
-print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM14']].iloc[50:].mean().round(2))
+print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','K_0','gamma','psi','phi_peak_KM14']].iloc[50:].mean().round(2))
 
 phi_peak_KM14 = df['phi_peak_KM14']
-
-
 
 
 
