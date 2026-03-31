@@ -111,6 +111,21 @@ for i in range(len(Names)):
 #Example of use of the result: results['Location 3']['wave_periods'] gives the array of wave periods of location 3 in chronological order
 #
 
+for i,n in zip(location,range(8)):
+    t=np.cumsum(results[i]['wave_periods'])
+    plt.figure(n+10)
+    plt.plot(t,results[i]['wave_periods'])
+
+
+
+means = {}
+
+for loc in location:
+    means[loc] = {
+        'avg': np.mean(results[loc]['wave_periods'])
+    }
+
+print(means['Location 1']['avg'])
 
 #Keep show in bottom
 plt.show()

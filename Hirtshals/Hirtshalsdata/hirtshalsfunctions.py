@@ -1,3 +1,7 @@
+import numpy as np
+import pandas as pd
+import inspect
+
 def csv_to_vars(Names, DirectoryAndName, Coloumns, FirstRow):
     df = pd.read_csv(DirectoryAndName, header=None)
     caller_globals = inspect.currentframe().f_back.f_globals
