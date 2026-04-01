@@ -3,7 +3,7 @@ from helper_functions import waveLengthIteration
 
 # Known values
 g = 9.82 # Gravitational acceleration [m/s^2]
-h = 6 # Water depth [m]
+h = 10 # Water depth [m]
 Hs = 5.84 # Significant wave height [m]
 Hm0 = Hs # Significant wave height based on frequency spectrum. That is not used here. [m]
 T_10 = 12.7 # Spectral period [s]
@@ -11,11 +11,11 @@ Tm = 12.7 # Mean period [s]
 Nw = 1000 # Number of waves when checking for damage
 
 # Structure
-Dn50 = np.array([2, 0.9, 0.4]) # Stone size when looking at the armour layer, filter layer and core. [m]
-Thickness = np.array([4, 2.7]) # Thickness of the armour layer and filter layer. [m]
+Dn50 = np.array([2, 0.93, 0.34]) # Stone size when looking at the armour layer, filter layer and core. [m]
+Thickness = np.array([3.48, 1.86]) # Thickness of the armour layer and filter layer. [m]
 PermeableStructure = True  # If the breakwater is permeable to water.
 Gc = 3 * Dn50[0] # Is the width of the crest. [m]
-q_criteria = 5*10**(-3) # The amount of water that is allowed to over-top. [m3/s per m]
+q_criteria = 10 # The amount of water that is allowed to over-top. [l/s per m]
 slope=1/2 #top is y bottom is x
 slope_angle = np.arctan(slope) # The slope of the breakwater. np.arctan(1/2) = is a slope of 1:2.
 
