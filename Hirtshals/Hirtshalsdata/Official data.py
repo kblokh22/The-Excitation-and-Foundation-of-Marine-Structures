@@ -48,9 +48,18 @@ for i in range(len(Names)):
 
 #print(timeHMAX[157]) #We arrive at hirtshals and start measuring
 #print(timeHMAX[165]) #We leave
+time_converted = pd.to_datetime(timeMEANH[156:166])
+
+x_data = pd.to_datetime(timeMEANH[156:166])
+y_data = MEANH[156:166]
 
 plt.figure(1)
-plt.plot(timeMEANH[157:165],MEANH[157:165])
-plt.gca().xaxis.set_major_locator(MaxNLocator(nbins=3))
-plt.show()
+plt.plot(x_data, y_data, marker='o')
 
+for x, y in zip(x_data, y_data):
+    plt.text(x, y + 0.005, f'{y:.2f}', ha='center', va='bottom', fontsize=9)
+
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.title('Average wave height (buoy)')
+plt.show()

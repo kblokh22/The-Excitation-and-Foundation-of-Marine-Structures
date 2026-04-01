@@ -128,7 +128,7 @@ for i,n in zip(location,range(8)):
     t=np.cumsum(results[i]['wave_periods'])
     plt.figure(n+10)
     plt.title(f'Wave heights at {i}')
-    plt.plot(t,results[i]['wave_heights'])
+    plt.scatter(t,results[i]['wave_heights'])
 
 
 
@@ -138,7 +138,34 @@ for loc,ti in zip(location,time):
     means[loc] = {
         'avg': np.mean(results[loc]['wave_heights'])
     }
-    print(f'Aveage wave height at {loc} is {means[loc]["avg"]:.2f} from {ti[0]} to {ti[-1]}')
+    print(f'Aveage wave height at {loc} is {means[loc]["avg"]:.2f}[m] from {ti[0]} to {ti[-1]}')
+
+
+#
+AVGWaveOutside = {}
+
+AVGWaveOutside[location[0]] = { 'AVGWave': 1.93 }
+AVGWaveOutside[location[1]] = { 'AVGWave': 1.91 }
+AVGWaveOutside[location[2]] = { 'AVGWave': 1.86 }
+AVGWaveOutside[location[3]] = { 'AVGWave': 2.18 }
+AVGWaveOutside[location[4]] = { 'AVGWave': 2.18 }
+AVGWaveOutside[location[5]] = { 'AVGWave': 1.95 }
+AVGWaveOutside[location[6]] = { 'AVGWave': 2.11 }
+AVGWaveOutside[location[7]] = { 'AVGWave': 1.91 }
+
+Diffraction = {}
+
+for loc in location:
+    Diffraction[loc] = {
+        'CD': means[loc]['avg'] / AVGWaveOutside[loc]['AVGWave'],
+    }
+    print(f'Diffraction coefficient for {loc} is {Diffraction[loc]["CD"]:.2f}')
+
+for i,loc in zip(range(8),location):
+    plt.figure(i+20)
+    plt.title(f'Histogram of wave heights at {loc}')
+    plt.hist(results[loc]['wave_heights'],bins=10)
+
 
 #Keep show in bottom
 plt.show()
