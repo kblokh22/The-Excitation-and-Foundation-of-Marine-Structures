@@ -773,6 +773,13 @@ plt.xlabel("Depth (m)")
 plt.ylabel("Peak Friction Angle (deg)")
 
 
+
+
+
+
+
+
+
 #code til robersen plot
 Xf = -1.22
 Yf = 3.47
@@ -788,6 +795,7 @@ Qtn_Z1_limit = 12 * np.exp(-1.4 * Fr_vals)
 Fr_stiff = np.linspace(0.6, 10, 1000)
 denom = 0.005*(Fr_stiff - 1) - 0.0003*(Fr_stiff - 1)**2 - 0.002
 Qtn_stiff_limit = np.divide(1, denom, out=np.full_like(denom, 1000), where=denom>0)
+
 
 for Ic in Ic_boundaries:
     val = Ic**2 - (log_Fr - Xf)**2
@@ -810,6 +818,9 @@ for Ic in Ic_boundaries:
 
 plt.plot(Fr_vals, Qtn_Z1_limit, 'r-', linewidth=2, label='Zone 1 (Sensitive)')
 plt.plot(Fr_stiff, Qtn_stiff_limit, 'g-', linewidth=2, label='Zone 8/9 (Stiff)')
+
+
+
 plt.scatter(df['F_r'], Q_tn,
                       c=df['Layer_ID'].astype(int),
                       cmap=custom_cmap,
