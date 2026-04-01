@@ -2,6 +2,7 @@ import pandas as pd
 import inspect
 import numpy as np
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import matplotlib.pyplot as plt
 from math import floor
 
@@ -47,12 +48,24 @@ for d in dist:
     d-=np.nanmean(d)
 ########################################################################################
 
+
+#Convert dist from [mm] to [m]
+for d in dist:
+    d/=1000
+
+
 #Convert the time array from unix to real time
+tz = ZoneInfo("Europe/Copenhagen")
+offset_sekunder = 3600
+
 for i in range(len(Names)):
     time_array = globals()[Names[i][2]]
+    time_array_corrected = time_array - offset_sekunder
+
     converted = [
-        datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        for ts in time_array
+        datetime.fromtimestamp(ts, tz)
+        .strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        for ts in time_array_corrected
     ]
     globals()[Names[i][2]] = np.array(converted)
 
@@ -114,18 +127,18 @@ for i in range(len(Names)):
 for i,n in zip(location,range(8)):
     t=np.cumsum(results[i]['wave_periods'])
     plt.figure(n+10)
-    plt.plot(t,results[i]['wave_periods'])
+    plt.title(f'Wave heights at {i}')
+    plt.plot(t,results[i]['wave_heights'])
 
 
 
 means = {}
 
-for loc in location:
+for loc,ti in zip(location,time):
     means[loc] = {
-        'avg': np.mean(results[loc]['wave_periods'])
+        'avg': np.mean(results[loc]['wave_heights'])
     }
-
-print(means['Location 1']['avg'])
+    print(f'Aveage wave height at {loc} is {means[loc]["avg"]:.2f} from {ti[0]} to {ti[-1]}')
 
 #Keep show in bottom
 plt.show()
