@@ -4,11 +4,10 @@ from helper_functions import waveLengthIteration
 # Known values
 g = 9.82 # Gravitational acceleration [m/s^2]
 h = 6 # Water depth [m]
-Hs = 6.5 # Significant wave height [m]
+Hs = 5.84 # Significant wave height [m]
 Hm0 = Hs # Significant wave height based on frequency spectrum. That is not used here. [m]
-T_10 = 16.3 # Spectral period [s]
-Tm = 13.7 # Mean period [s]
-Tp = 16.5 # Peak period [s]
+T_10 = 12.7 # Spectral period [s]
+Tm = 12.7 # Mean period [s]
 Nw = 1000 # Number of waves when checking for damage
 
 # Structure
@@ -23,17 +22,14 @@ slope_angle = np.arctan(slope) # The slope of the breakwater. np.arctan(1/2) = i
 # Wave parameters
 L_mDeep = (g * Tm**2) / (2 * np.pi)
 L_10Deep = (g * T_10**2) / (2 * np.pi)
-L_0pDeep = (g * Tp**2) / (2 * np.pi)
 
-L_10 = waveLengthIteration(T_10, h)
+L_10 = waveLengthIteration(Tm, h)
 
 s_m = Hs / L_mDeep
 s_10 = Hm0 / L_10Deep
-s_0p = Hs / L_0pDeep
 
 xi_m = np.tan(slope_angle) / np.sqrt(s_m)
 xi_10 = np.tan(slope_angle) / np.sqrt(s_10)
-xi_0p = np.tan(slope_angle) / np.sqrt(s_0p)
 
 # (1) Overtopping EurOtop
 gamma_f = 0.4
@@ -123,7 +119,7 @@ Cr = (KR1 - KR0) * (1 + ((h / (L_10 * np.tan(slope_angle))) / a_refl)**gamma_ref
 print(f"Cr: {Cr:.4f}")
 
 # (7) Transmission
-b_trans = -5.42 * s_0p + 0.0323 * Hs / Dn50_A - 0.0017 * (Gc / Dn50_A)**1.84 + 0.51
+b_trans = -5.42 * s_m + 0.0323 * Hs / Dn50_A - 0.0017 * (Gc / Dn50_A)**1.84 + 0.51
 Ct = (0.031 * Hs / Dn50_A - 0.24) * R_cEurOtop / Dn50_A + b_trans
 Ct = np.clip(Ct, 0.075, 0.75)
 print(f"Ct: {Ct:.4f}")
