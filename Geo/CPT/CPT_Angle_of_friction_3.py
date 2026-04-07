@@ -655,7 +655,7 @@ df['K_0'] = 1-np.sin(np.radians(df['phi_peak_KM3']))*OCR**(1-np.sin(np.radians(d
 
 
 #Robertson (2009/2010)
-df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
+df['psi'] = 0.56 - 0.33*np.log10(Q_tn)
 
 
 
@@ -673,10 +673,6 @@ print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM3']].mean().
 
 
 print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','K_0','gamma','psi','phi_peak_KM3']].iloc[50:].mean().round(2))
-
-
-phi_peak_KM3 = df['phi_peak_KM3']
-
 
 df['gamma2'] = df['gamma']
 #AI plots
