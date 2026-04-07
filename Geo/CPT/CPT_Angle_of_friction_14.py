@@ -405,7 +405,7 @@ df['K_0'] = 1-np.sin(np.radians(df['phi_peak_KM14']))*OCR**(1-np.sin(np.radians(
 
 
 #Robertson (2009/2010)
-df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
+df['psi'] = 0.56 - 0.33*np.log10(Q_tn)
 
 
 bins = [0,1.6,1.95,3]

@@ -32,3 +32,12 @@ print(val)
 c_d = val/1.8
 print(c_d)
 print("-"*100)
+
+
+#boreholes c_u
+bore_cu = 702
+
+df['mu [-]'] = bore_cu/df['c_u [kPa]']
+mu = df['mu [-]'].iloc[1:].mean()
+print(mu)
+
