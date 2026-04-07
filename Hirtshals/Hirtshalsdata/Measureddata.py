@@ -82,6 +82,7 @@ for i in range(len(Names)):
     dist = globals()[Names[i][1]]
     plt.plot(t,dist)
     plt.title(f'{location[i]}, {time[i][0]} to {time[i][-1]}')
+    plt.savefig(f'{location[i]} raw data.png')
 
 
 
@@ -129,6 +130,7 @@ for i,n in zip(location,range(8)):
     plt.figure(n+10)
     plt.title(f'Wave heights at {i}')
     plt.scatter(t,results[i]['wave_heights'])
+    plt.savefig(f'{location[n]} wave periods scatter plot')
 
 
 
@@ -165,6 +167,7 @@ for i,loc in zip(range(8),location):
     plt.figure(i+20)
     plt.title(f'Histogram of wave heights at {loc}')
     plt.hist(results[loc]['wave_heights'],bins=10)
+    plt.savefig(f'{location[i]} histogram of wave heights')
 
 
 #Keep show in bottom
