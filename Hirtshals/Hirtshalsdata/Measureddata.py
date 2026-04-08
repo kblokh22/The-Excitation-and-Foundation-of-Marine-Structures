@@ -80,6 +80,8 @@ for i in range(len(Names)):
     t = globals()[Names[i][0]]
     t = t - t[0]
     dist = globals()[Names[i][1]]
+    plt.xlabel('Time [s]')
+    plt.ylabel('Distance [m]')
     plt.plot(t,dist)
     plt.title(f'{location[i]}, {time[i][0]} to {time[i][-1]}')
     plt.savefig(f'{location[i]} raw data.png')
@@ -129,6 +131,8 @@ for i,n in zip(location,range(8)):
     t=np.cumsum(results[i]['wave_periods'])
     plt.figure(n+10)
     plt.title(f'Wave heights at {i}')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Wave height [m]')
     plt.scatter(t,results[i]['wave_heights'])
     plt.savefig(f'{location[n]} wave periods scatter plot')
 
