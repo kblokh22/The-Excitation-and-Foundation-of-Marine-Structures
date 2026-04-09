@@ -220,9 +220,15 @@ r = n * k_delta * ( W / w_a )**(1/3)
 for idx, r_i in enumerate(r):
     print(f"Thickness of layer {idx+1}: {r_i:.4f}")
 
+# Stability of the roundhead
 
+A_round = 0.198
+B_round = -1.234
+C_round = 3.289
 
+required_stone_size = (A_round * xi_m**2 + B_round * xi_m + C_round) / Hs
 
+print(f"Stone size required for roundhead stability: {required_stone_size:.4f} m")
 
 
 
