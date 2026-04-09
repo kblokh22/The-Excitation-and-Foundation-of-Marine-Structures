@@ -3,6 +3,8 @@ import pandas as pd
 import io
 import matplotlib.pyplot as plt
 
+from Geo.CPT.CPT_Angle_of_friction_14 import phi_peak_KM14
+
 
 def plot_robertson_boundaries(ax):
     """Adds Robertson (1990) SBT zones to an existing Axes."""
@@ -655,7 +657,7 @@ df['K_0'] = 1-np.sin(np.radians(df['phi_peak_KM3']))*OCR**(1-np.sin(np.radians(d
 
 
 #Robertson (2009/2010)
-df['psi'] = 0.56 - 0.33*np.log10(df['Q_t'])
+df['psi'] = 0.56 - 0.33*np.log10(Q_tn)
 
 
 
@@ -669,15 +671,11 @@ print(df.groupby('Layer_ID')[[ 'sigma_v0', 'sigma_v0_e', 'qt_smooth']].mean().ro
 
 print("--- Layer Average ---")
 print(df.groupby('Layer_ID')[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM3']].mean().round(2))
-print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','gamma','psi','phi_peak_KM3']].mean().round(2))
-
 
 print(df[[ 'G_0', 'E_0', 'I_c', 'D_r','M','K_0','gamma','psi','phi_peak_KM3']].iloc[50:].mean().round(2))
 
 
 phi_peak_KM3 = df['phi_peak_KM3']
-
-
 df['gamma2'] = df['gamma']
 #AI plots
 from matplotlib.colors import ListedColormap

@@ -2,6 +2,7 @@ import pandas as pd
 import inspect
 import numpy as np
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import matplotlib.pyplot as plt
 from math import floor
 
@@ -47,12 +48,24 @@ for d in dist:
     d-=np.nanmean(d)
 ########################################################################################
 
+
+#Convert dist from [mm] to [m]
+for d in dist:
+    d/=1000
+
+
 #Convert the time array from unix to real time
+tz = ZoneInfo("Europe/Copenhagen")
+offset_sekunder = 3600
+
 for i in range(len(Names)):
     time_array = globals()[Names[i][2]]
+    time_array_corrected = time_array - offset_sekunder
+
     converted = [
-        datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        for ts in time_array
+        datetime.fromtimestamp(ts, tz)
+        .strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        for ts in time_array_corrected
     ]
     globals()[Names[i][2]] = np.array(converted)
 
@@ -67,8 +80,11 @@ for i in range(len(Names)):
     t = globals()[Names[i][0]]
     t = t - t[0]
     dist = globals()[Names[i][1]]
+    plt.xlabel('Time [s]')
+    plt.ylabel('Distance [m]')
     plt.plot(t,dist)
     plt.title(f'{location[i]}, {time[i][0]} to {time[i][-1]}')
+    plt.savefig(f'{location[i]} raw data.png')
 
 
 
@@ -114,18 +130,49 @@ for i in range(len(Names)):
 for i,n in zip(location,range(8)):
     t=np.cumsum(results[i]['wave_periods'])
     plt.figure(n+10)
-    plt.plot(t,results[i]['wave_periods'])
+    plt.title(f'Wave heights at {i}')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Wave height [m]')
+    plt.scatter(t,results[i]['wave_heights'])
+    plt.savefig(f'{location[n]} wave periods scatter plot')
 
 
 
 means = {}
 
-for loc in location:
+for loc,ti in zip(location,time):
     means[loc] = {
-        'avg': np.mean(results[loc]['wave_periods'])
+        'avg': np.mean(results[loc]['wave_heights'])
     }
+    print(f'Aveage wave height at {loc} is {means[loc]["avg"]:.2f}[m] from {ti[0]} to {ti[-1]}')
 
-print(means['Location 1']['avg'])
+
+#
+AVGWaveOutside = {}
+
+AVGWaveOutside[location[0]] = { 'AVGWave': 1.93 }
+AVGWaveOutside[location[1]] = { 'AVGWave': 1.91 }
+AVGWaveOutside[location[2]] = { 'AVGWave': 1.86 }
+AVGWaveOutside[location[3]] = { 'AVGWave': 2.18 }
+AVGWaveOutside[location[4]] = { 'AVGWave': 2.18 }
+AVGWaveOutside[location[5]] = { 'AVGWave': 1.95 }
+AVGWaveOutside[location[6]] = { 'AVGWave': 2.11 }
+AVGWaveOutside[location[7]] = { 'AVGWave': 1.91 }
+
+Diffraction = {}
+
+for loc in location:
+    Diffraction[loc] = {
+        'CD': means[loc]['avg'] / AVGWaveOutside[loc]['AVGWave'],
+    }
+    print(f'Diffraction coefficient for {loc} is {Diffraction[loc]["CD"]:.2f}')
+
+for i,loc in zip(range(8),location):
+    plt.figure(i+20)
+    plt.title(f'Histogram of wave heights at {loc}')
+    plt.hist(results[loc]['wave_heights'],bins=10)
+    plt.savefig(f'{location[i]} histogram of wave heights')
+
 
 #Keep show in bottom
 plt.show()
