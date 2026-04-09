@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 import matplotlib.pyplot as plt
 from math import floor
+from scipy.fft import fft, fftfreq
 
 #Load data
 def csv_to_vars(Names, DirectoryAndName, Coloumns, FirstRow):
@@ -174,5 +175,55 @@ for i,loc in zip(range(8),location):
     plt.savefig(f'{location[i]} histogram of wave heights')
 
 
+##########################################################################
+#Creating zooms of raw data and displaying the individual waves (first 60 data points)
+dist = [dist1, dist2, dist3, dist4, dist5, dist6, dist7, dist10]
+
+timer=[t1,t2,t3,t4,t5,t6,t7,t10]
+
+for i in range(8):
+    plt.figure(i + 30)
+    t = timer[i][:60]
+    d = dist[i][:60]
+    plt.plot(t, d)
+    for j in range(len(d) - 1):
+        if d[j] >= 0 and d[j + 1] < 0:
+            plt.axvline(x=t[j], linestyle='--')
+    plt.grid()
+    plt.savefig(f'{location[i]} raw data zoom')
+
+
+########################################################################################
+#Calculating H1/3
+
+
+H1_3 = {}
+for loc in location:
+    sorted = np.sort(results[loc]['wave_heights'])
+    n=int(len(sorted)*(2/3))
+    H1_3[loc] = {'3rds': np.mean(sorted[n:])}
+
+for loc in location:
+    print(f'H1/3 at {loc} = {H1_3[loc]['3rds']:.2f}')
+
+########################################################################
+#FFT of raw data
+
+for i in range(8):
+    N=len(dist[i])
+    T=1.0 / 800
+    x=timer[i]
+    y=dist[i]
+    mask=~np.isnan(y)
+    x=x[mask]
+    y=y[mask]
+    yf=fft(y)
+    xf=fftfreq(N,T)[:N//2]
+    plt.figure(40+i)
+    plt.plot(xf,2.0/N*np.abs(yf[0:N//2]))
+    plt.grid()
+    plt.savefig(f'{location[i]} FFT')
+
+
 #Keep show in bottom
-plt.show()
+#plt.show() not now baby
