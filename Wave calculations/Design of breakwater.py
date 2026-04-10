@@ -11,7 +11,7 @@ Tm = 12.7 # Mean period [s]
 Nw = 1000 # Number of waves when checking for damage
 
 # Structure
-Dn50 = np.array([2, 0.93, 0.34]) # Stone size when looking at the armour layer, filter layer and core. [m]
+Dn50 = np.array([1.68, 0.93, 0.34]) # Stone size when looking at the armour layer, filter layer and core. [m]
 Thickness = np.array([3.48, 1.86]) # Thickness of the armour layer and filter layer. [m]
 PermeableStructure = True  # If the breakwater is permeable to water.
 Gc = 3 * Dn50[0] # Is the width of the crest. [m]
@@ -209,7 +209,7 @@ print(f"N_OD: {N_OD:.2f}")
 n = 2           # number of quarrystone
 k_delta = 1     # Layer coefficient
 w_a = rho_a      # Specific weight of the quarrystone
-D_sieve = np.array([2, 0.93])     # Diameter of the stone to be investigated
+D_sieve = np.array([1.68, 0.93])     # Diameter of the stone to be investigated
 W = 0.6575162324 * w_a * D_sieve**3         # weight of the individual quarrystone
 
 for idx, W_i in enumerate(W):
