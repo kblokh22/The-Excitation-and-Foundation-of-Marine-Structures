@@ -242,7 +242,7 @@ for i in range(8):
     yf=fft(y)
     xf=fftfreq(N,T)[:N//2]
     plt.figure(40+i)
-    plt.title(f'{location[i]} FFT of wave heights')
+    plt.title(f'{location[i]} FFT')
     plt.xlabel('Frequency [Hz]')
     plt.ylabel('Amplitude')
     plt.plot(xf,2.0/N*np.abs(yf[0:N//2]))
