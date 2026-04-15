@@ -1,6 +1,10 @@
 import numpy as np
 from helper_functions import waveLengthIteration
 
+GREEN = '\033[32m'
+RED = '\033[31m'
+RESET = '\033[0m'
+
 # Known values
 g = 9.82 # Gravitational acceleration [m/s^2]
 h = 10 # Water depth [m]
@@ -11,13 +15,21 @@ Tm = 12.7 # Mean period [s]
 Nw = 1000 # Number of waves when checking for damage
 
 # Structure
-Dn50 = np.array([1.68, 0.93, 0.34]) # Stone size when looking at the armour layer, filter layer and core. [m]
-Thickness = np.array([3.48, 1.86]) # Thickness of the armour layer and filter layer. [m]
+Dn50 = np.array([1.68, 0.64, 0.2]) # Stone size when looking at the armour layer, filter layer and core. [m]
 PermeableStructure = True  # If the breakwater is permeable to water.
 Gc = 3 * Dn50[0] # Is the width of the crest. [m]
-q_criteria = 10 # The amount of water that is allowed to over-top. [l/s per m]
+q_criteria = 0.01 # The amount of water that is allowed to over-top. [m3/s per m]
 slope=1/2 #top is y bottom is x
 slope_angle = np.arctan(slope) # The slope of the breakwater. np.arctan(1/2) = is a slope of 1:2.
+
+# Thickness of layers
+c_thickness = 1 # 1 because of rock armour type
+t_armour = 2 * c_thickness * Dn50[0]
+t_filter = max(2 * Dn50[1], 0.5 * Dn50[0], 0.5)
+Thickness = np.array([t_armour, t_filter]) # Thickness of the armour layer and filter layer. [m]
+
+for idx, thickness in enumerate(Thickness):
+    print(f"Thickness of layer {idx+1}: {thickness:.4f}")
 
 # Wave parameters
 L_mDeep = (g * Tm**2) / (2 * np.pi)
@@ -147,19 +159,24 @@ print(f'The breakwater scour is {S}')
 
 #Stability
 Ns=Hs / (Delta*Dn50[0])
-print(f'Ns: {Ns:.4f}')
 
 dn50_max = Hs / (Delta * 1)
 
 dn50_min = Hs / (Delta * 4)
 
 print(f"Dn50 must be between {dn50_min:.3f} m and {dn50_max:.3f} m")
-
 print(f'The armour unit Dn50 is {Dn50[0]} m')
 if 1 < Ns < 4:
-    print(f'Rubble-mound is stable')
+    print(f'{GREEN}The stone size fits the requirement{RESET}\n')
 else:
-    print(f'Rubble-mound is unstable')
+    print(f'{RED}The stone size does not fit the requirement{RESET}\n')
+
+print("Ns must be between 1 and 4")
+print(f'Ns: {Ns:.4f}')
+if 1 < Ns < 4:
+    print(f'{GREEN}Rubble-mound is stable{RESET}\n')
+else:
+    print(f'{RED}Rubble-mound is unstable{RESET}\n')
 
 
 #Sliding
@@ -181,14 +198,14 @@ mu=0.7
 side1=(rho_a*H**3) / (M*(rho_a/rho_w - 1)**3 * cot(alpha))
 side2=(1/(C**3 * cot(alpha)))*( (mu*np.cos(alpha)-np.sin(alpha))/(np.cos(beta)+mu*np.sin(beta)) )**3
 
-print(side1)
-print(side2)
+print(f'side1: {side1}')
+print(f'side2: {side2}')
 if side1 <= side2:
-    print('No sliding occurs')
+    print(f"{GREEN}No sliding occurs{RESET}\n")
 elif side1 > side2:
-    print('Sliding occurs')
+    print(f'{RED}Sliding occurs{RESET}\n')
 elif side1 < 0:
-    print('Negative result (error)')
+    print('Negative result (error)\n')
 
 #Toe stability
 T_m1=T_10
@@ -201,6 +218,22 @@ mu_s=np.pi*Hs / T_m1 * 1 / np.sinh(k*h_t)
 N_OD=0.032*(t_t/Hs)*(B_t/Hs)**0.3 * (Hs/(Delta*Dn50[1]))**3 * (mu_s/np.sqrt(9.82*Hs))
 print(f"N_OD: {N_OD:.2f}")
 
+# Stability of the roundhead
+
+A_round = 0.198
+B_round = -1.234
+C_round = 3.289
+
+required_stone_size = (A_round * xi_m**2 + B_round * xi_m + C_round) / Hs
+
+print(f"Stone size required for roundhead stability: {required_stone_size:.4f} m")
+
+if required_stone_size <= Dn50[0]:
+    print(f"{GREEN}Roundhead is stable{RESET} with stone size {Dn50[0]:.2f} m")
+else:
+    print(f"{RED}Roundhead is unstable{RESET} with stone size {Dn50[0]:.2f} m")
+
+'''
 # Thickness of the layers according to the US army coastal engineering manual
 # (Page VI-5-135)
 
@@ -219,19 +252,7 @@ r = n * k_delta * ( W / w_a )**(1/3)
 
 for idx, r_i in enumerate(r):
     print(f"Thickness of layer {idx+1}: {r_i:.4f}")
-
-# Stability of the roundhead
-
-A_round = 0.198
-B_round = -1.234
-C_round = 3.289
-
-required_stone_size = (A_round * xi_m**2 + B_round * xi_m + C_round) / Hs
-
-print(f"Stone size required for roundhead stability: {required_stone_size:.4f} m")
-
-
-
+'''
 
 
 
