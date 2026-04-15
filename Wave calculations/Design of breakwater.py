@@ -248,9 +248,9 @@ required_stone_size = (A_round * xi_m**2 + B_round * xi_m + C_round) / Hs
 print(f"Stone size required for roundhead stability: {required_stone_size:.4f} m")
 
 if required_stone_size <= Dn50[0]:
-    print(f"{GREEN}Roundhead is stable{RESET} with stone size {Dn50[0]:.2f} m")
+    print(f"{GREEN}Roundhead is stable with stone size {Dn50[0]:.2f} m{RESET}")
 else:
-    print(f"{RED}Roundhead is unstable{RESET} with stone size {Dn50[0]:.2f} m")
+    print(f"{RED}Roundhead is unstable with stone size {Dn50[0]:.2f} m{RESET}")
 
 '''
 # Thickness of the layers according to the US army coastal engineering manual
