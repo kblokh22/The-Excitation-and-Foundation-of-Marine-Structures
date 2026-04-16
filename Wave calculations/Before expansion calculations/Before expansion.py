@@ -13,7 +13,8 @@ coloumns=[1,2,3,4,5,6,7,8]
 for loc,col in zip(locations,coloumns):
     Data[loc]={'wave': df.iloc[:, col].astype(float)}
 
-t = np.arange(0, 600.5, 0.5)
+time_in_minutes=10
+t = np.arange(0, time_in_minutes*60+0.5, 0.5)
 
 plt.figure(1)
 for loc in locations:
