@@ -1,5 +1,5 @@
 import numpy as np
-from helper_functions import waveLengthIteration
+from helper_functions import waveLengthIteration, draw_complete_breakwater
 
 GREEN = '\033[32m'
 RED = '\033[31m'
@@ -273,7 +273,19 @@ for idx, r_i in enumerate(r):
     print(f"Thickness of layer {idx+1}: {r_i:.4f}")
 '''
 
+measurements = {
+    'water_depth': h,
+    'crest_height_above_seabed': h + R_cEldrup,
+    'crest_width': Gc,
+    'slope_seaward': 1/slope,
+    'slope_landward': 1/slope,
+    'armour_thickness': Thickness[0],
+    'filter_thickness': Thickness[1],
+    'toe_width': B_t,
+    'toe_height': t_t
+}
 
+draw_complete_breakwater(measurements)
 
 
 
