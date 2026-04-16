@@ -3,6 +3,7 @@ import numpy as np
 from scipy.optimize import fsolve
 import pandas as pd
 from scipy.ndimage import label, maximum_position
+import matplotlib.pyplot as plt
 
 def load_wave_data(filepath1, filepath2):
     years = np.arange(2013, 2019)
@@ -205,3 +206,71 @@ def waveLengthIteration(wave_period, water_depth):
 
     print(f"Wave length found to be {L[-1]:.2f} m after {n} iterations.")
     return L[-1]
+
+def draw_complete_breakwater(params):
+    # Extract parameters
+    d = params['water_depth']
+    h_crest = params['crest_height_above_seabed']
+    w_crest = params['crest_width']
+    s_sea = params['slope_seaward']
+    s_land = params['slope_landward']
+    t_armour = params['armour_thickness']
+    t_filter = params['filter_thickness']
+
+    # Toe parameters
+    w_toe_top = params['toe_width']
+    h_toe = params['toe_height']
+
+    plt.figure(figsize=(12, 6))
+
+    # --- 1. Armour Layer (Outer) ---
+    arm_top_l = [-w_crest / 2, h_crest]
+    arm_top_r = [w_crest / 2, h_crest]
+    arm_bot_l = [-w_crest / 2 - h_crest * s_sea, 0]
+    arm_bot_r = [w_crest / 2 + h_crest * s_land, 0]
+    arm_poly = np.array([arm_bot_l, arm_top_l, arm_top_r, arm_bot_r])
+
+    # --- 2. Filter Layer (Intermediate) ---
+    # Offset based on armour thickness
+    f_h = h_crest - t_armour
+    f_top_l = [-w_crest / 2, f_h]
+    f_top_r = [w_crest / 2, f_h]
+    # Geometry: base shifts inward by (thickness * slope)
+    f_bot_l = [arm_bot_l[0] + (t_armour * s_sea), 0]
+    f_bot_r = [arm_bot_r[0] - (t_armour * s_land), 0]
+    filter_poly = np.array([f_bot_l, f_top_l, f_top_r, f_bot_r])
+
+    # --- 3. Core (Inner) ---
+    # Offset based on filter thickness
+    c_h = f_h - t_filter
+    c_top_l = [-w_crest / 2, c_h]
+    c_top_r = [w_crest / 2, c_h]
+    c_bot_l = [f_bot_l[0] + (t_filter * s_sea), 0]
+    c_bot_r = [f_bot_r[0] - (t_filter * s_land), 0]
+    core_poly = np.array([c_bot_l, c_top_l, c_top_r, c_bot_r])
+
+    # --- 4. Sloped Toe (Matches Seaward Slope) ---
+    toe_inner_on_slope = [arm_bot_l[0] + (h_toe * s_sea), h_toe]
+    toe_outer_top = [toe_inner_on_slope[0] - w_toe_top, h_toe]
+    toe_outer_base = [toe_outer_top[0] - (h_toe * s_sea), 0]
+    toe_poly = np.array([toe_outer_base, toe_outer_top, toe_inner_on_slope, arm_bot_l])
+
+    # --- Plotting ---
+    plt.fill(arm_poly[:, 0], arm_poly[:, 1], color='gray', alpha=0.4, label='Armour Layer', hatch='oo')
+    plt.fill(filter_poly[:, 0], filter_poly[:, 1], color='silver', alpha=0.8, label='Filter Layer', hatch='...')
+    plt.fill(core_poly[:, 0], core_poly[:, 1], color='peru', alpha=0.6, label='Core')
+    plt.fill(toe_poly[:, 0], toe_poly[:, 1], color='dimgray', label='Sloped Toe', hatch='xx')
+
+    # Environment
+    plt.axhline(y=d, color='blue', linestyle='--', linewidth=2, label='SWL')
+    plt.axhline(y=0, color='black', linewidth=2)  # Seabed
+
+    # Formatting
+    plt.title('Breakwater Cross-Section: Armour, Filter, Core & Toe', fontsize=14)
+    plt.xlabel('Distance (m)')
+    plt.ylabel('Elevation (m)')
+    plt.legend(loc='upper right')
+    plt.axis('equal')
+    plt.grid(True, linestyle=':', alpha=0.5)
+    plt.tight_layout()
+    plt.show()
