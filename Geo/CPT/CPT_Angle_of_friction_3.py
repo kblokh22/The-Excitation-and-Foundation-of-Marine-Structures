@@ -3,8 +3,6 @@ import pandas as pd
 import io
 import matplotlib.pyplot as plt
 
-from Geo.CPT.CPT_Angle_of_friction_14 import phi_peak_KM14
-
 
 def plot_robertson_boundaries(ax):
     """Adds Robertson (1990) SBT zones to an existing Axes."""
@@ -654,7 +652,9 @@ df['E_0'] = 2*df['G_0']*(1+0.3)
 OCR = 1
 df['K_0'] = 1-np.sin(np.radians(df['phi_peak_KM3']))*OCR**(1-np.sin(np.radians(df['phi_peak_KM3'])))
 
-
+plt.figure()
+plt.plot(df['E_0'], df['Depth_m'])
+plt.show()
 
 #Robertson (2009/2010)
 df['psi'] = 0.56 - 0.33*np.log10(Q_tn)
@@ -808,14 +808,14 @@ for Ic in Ic_boundaries:
     valid_indices = (current_Qtn > limit_Z1) & (current_Qtn < limit_stiff)
 
     plt.plot(current_Fr[valid_indices], current_Qtn[valid_indices],
-             color='orange', linewidth=1.5, alpha=0.8)
+             color='orange', linewidth=2, alpha=0.8)
 
     if any(valid_indices):
-        plt.text(current_Fr[valid_indices][-1], current_Qtn[valid_indices][-1],
+        plt.text(current_Fr[valid_indices][-100], current_Qtn[valid_indices][-1],
                  f' $I_c={Ic}$', fontsize=15, va='top')
 
-plt.plot(Fr_vals, Qtn_Z1_limit, 'r-', linewidth=2, label='Zone 1 (Sensitive)')
-plt.plot(Fr_stiff, Qtn_stiff_limit, 'g-', linewidth=2, label='Zone 8/9 (Stiff)')
+plt.plot(Fr_vals, Qtn_Z1_limit, 'orange', linewidth=2, label='Zone 1 (Sensitive)')
+plt.plot(Fr_stiff, Qtn_stiff_limit, 'orange', linewidth=2, label='Zone 8/9 (Stiff)')
 
 
 
@@ -826,6 +826,8 @@ plt.scatter(df['F_r'], Q_tn,
                       vmax=num_colors-1, # tab10 has 10 colors (0-9)
                       edgecolors='k',
                       alpha=0.5)
+
+plt.colorbar(label='Layer ID', ticks=range(len(df['Layer_ID'])))
 
 plt.xscale('log')
 plt.yscale('log')
