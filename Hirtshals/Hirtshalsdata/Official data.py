@@ -55,12 +55,14 @@ y_data = MEANH[156:166]
 
 plt.figure(1)
 plt.plot(x_data, y_data, marker='o')
-
 for x, y in zip(x_data, y_data):
     plt.text(x, y + 0.005, f'{y:.2f}', ha='center', va='bottom', fontsize=9)
 
 plt.xticks(rotation=90)
 plt.tight_layout()
 plt.title('Average wave height (buoy)')
+plt.xlabel('Time [Date and hour]')
+plt.ylabel('Wave height [m]')
+plt.subplots_adjust(bottom=0.2, left=0.15,right=0.95,top=0.95)
 plt.savefig('Officialdata.png')
 plt.show()
