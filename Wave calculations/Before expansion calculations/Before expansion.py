@@ -23,6 +23,7 @@ for loc in locations:
     plt.plot(t, Data[loc]['wave'],label=loc,linewidth=0.4)
 plt.legend(fontsize='small')
 plt.grid(True)
+plt.savefig('Raw data')
 
 ################################################################################
 #Zero down crossing
@@ -32,30 +33,43 @@ results = {}
 for loc in locations:
     eta = Data[loc]['wave'].values
     t_målt = t
+
+    # Find peaks (toppe) og troughs (dale)
     peaks, _ = find_peaks(eta, distance=5)
+    troughs, _ = find_peaks(-eta, distance=5)
 
     wave_heights = []
     wave_periods = []
-    peak_times = t_målt[peaks]
+    wave_times = []
+
+    i = 0  # index for troughs
 
     for j in range(len(peaks) - 1):
+        start_peak = peaks[j]
+        end_peak = peaks[j + 1]
 
-        start_idx = peaks[j]
-        end_idx = peaks[j + 1]
+        # find trough mellem to peaks
+        trough_candidates = troughs[(troughs > start_peak) & (troughs < end_peak)]
 
-        wave_segment = eta[start_idx:end_idx]
+        if len(trough_candidates) == 0:
+            continue  # skip hvis ingen trough
 
-        H = eta[start_idx] - wave_segment.min()
+        trough_idx = trough_candidates[np.argmin(eta[trough_candidates])]
 
-        T = t_målt[end_idx] - t_målt[start_idx]
+        crest = eta[start_peak]
+        trough = eta[trough_idx]
+
+        H = crest - trough
+        T = t_målt[end_peak] - t_målt[start_peak]
 
         wave_heights.append(H)
         wave_periods.append(T)
+        wave_times.append(t_målt[start_peak])
 
     results[loc] = {
         'wave_heights': np.array(wave_heights),
         'wave_periods': np.array(wave_periods),
-        'peak_times': peak_times[:-1]
+        'peak_times': np.array(wave_times)
     }
 
 
@@ -65,6 +79,8 @@ for loc in locations:
     plt.title(f"Peak-to-Peak bølgehøjder: {loc}")
     plt.xlabel("Tid (s)")
     plt.ylabel("Højde (m)")
+    plt.gca().set_ylim(bottom=0)
+    plt.savefig(f'Unfiltered wave heights at {loc}')
 
 #Remove wave heights from before the simulation becomes steady.
 
@@ -81,6 +97,8 @@ for loc in locations:
     plt.figure()
     plt.scatter(results[loc]['peak_times'], results[loc]['wave_heights'])
     plt.title(f'Filtered wave heights at {loc}')
+    plt.gca().set_ylim(bottom=0)
+    plt.savefig(f'Filtered wave heights at {loc}')
 
 
 #########################################################################################################
@@ -98,6 +116,16 @@ for loc in locations:
 for loc in locations:
     print(f'Disturbance coefficients for {loc} = {Disturbance_coefficients[loc]:.2f}')
 
-plt.show()
+coeff_real={}
 
+realcoef=np.array([0.12,0.06,0.08,0.12,0.11,0.17,0.27,0.09])
+
+for i in range(8):
+    coeff_real[locations[i]]=realcoef[i]
+
+deviation={}
+
+for loc in locations:
+    deviation[loc] = Disturbance_coefficients[loc] - coeff_real[loc]
+    print(f'difference of disturbance coefficient at {loc} is {deviation[loc]:.2f}')
 
