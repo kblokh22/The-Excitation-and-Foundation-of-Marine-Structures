@@ -33,7 +33,7 @@ t_filter = max(2 * Dn50[1], 0.5 * Dn50[0], 0.5)
 Thickness = np.array([t_armour, t_filter]) # Thickness of the armour layer and filter layer. [m]
 
 for idx, thickness in enumerate(Thickness):
-    print(f"Thickness of layer {idx+1}: {thickness:.4f}")
+    print(f"Thickness of layer {idx+1}: {thickness:.2f}")
 
 # Wave parameters
 L_mDeep = (g * Tm**2) / (2 * np.pi)
