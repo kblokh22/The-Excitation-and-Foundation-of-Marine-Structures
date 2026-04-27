@@ -27,6 +27,15 @@ plt.xlabel("Time (s)")
 plt.ylabel("Surface height (m)")
 plt.savefig('Raw data irregular')
 
+
+for loc in locations:
+    plt.figure()
+    plt.plot(t, Data[loc]['wave'], linewidth=0.4)
+    plt.grid(True)
+    plt.xlabel("Time (s)")
+    plt.ylabel("Surface height (m)")
+    plt.savefig(f'Raw data irregular {loc}')
+
 ################################################################################
 #Zero down crossing
 
