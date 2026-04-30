@@ -19,7 +19,7 @@ Nw = 1000 # Number of waves when checking for damage
 Dn50 = np.array([1.68, 0.64, 0.2]) # Stone size when looking at the armour layer, filter layer and core. [m]
 PermeableStructure = True  # If the breakwater is permeable to water.
 Gc = 3 * Dn50[0] # Is the width of the crest. [m]
-q_criteria = 10 # The amount of water that is allowed to over-top. [m3/s per m]
+q_criteria = 10 # The amount of water that is allowed to over-top. [l/s per m]
 slope=1/2.5 #top is y bottom is x
 slope_angle = np.arctan(slope) # The slope of the breakwater. np.arctan(1/2) = is a slope of 1:2.
 
