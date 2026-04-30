@@ -4,6 +4,7 @@ from helper_functions import waveLengthIteration, draw_complete_breakwater
 GREEN = '\033[32m'
 RED = '\033[31m'
 YELLOW = '\033[33m'
+PINK = '\033[95m'
 RESET = '\033[0m'
 
 # Known values
@@ -286,12 +287,3 @@ measurements = {
 }
 
 draw_complete_breakwater(measurements)
-
-
-
-
-
-
-
-
-
