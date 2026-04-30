@@ -266,10 +266,10 @@ def draw_complete_breakwater(params):
     plt.axhline(y=0, color='black', linewidth=2)  # Seabed
 
     # Formatting
-    plt.title('Breakwater Cross-Section: Armour, Filter, Core & Toe', fontsize=14)
+    # plt.title('Breakwater Cross-Section: Armour, Filter, Core & Toe', fontsize=14)
     plt.xlabel('Distance (m)')
     plt.ylabel('Elevation (m)')
-    plt.legend(loc='upper right')
+    # plt.legend(loc='upper right')
     plt.axis('equal')
     plt.grid(True, linestyle=':', alpha=0.5)
     plt.tight_layout()
