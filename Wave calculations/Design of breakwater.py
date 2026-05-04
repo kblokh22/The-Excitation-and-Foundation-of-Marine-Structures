@@ -276,7 +276,7 @@ for idx, r_i in enumerate(r):
 
 measurements = {
     'water_depth': h,
-    'crest_height_above_seabed': h + R_cEldrup + Thickness[0],
+    'crest_height_above_seabed': h + R_cEldrup,
     'crest_width': Gc,
     'slope_seaward': 1/slope,
     'slope_landward': 1/slope,
