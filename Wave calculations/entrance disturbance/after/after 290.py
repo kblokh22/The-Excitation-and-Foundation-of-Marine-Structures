@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-df=pd.read_excel('entrance 290.xlsx',skiprows=1)
+df=pd.read_excel('after 290.xlsx',skiprows=1)
 
 locations=['entrance']
 
