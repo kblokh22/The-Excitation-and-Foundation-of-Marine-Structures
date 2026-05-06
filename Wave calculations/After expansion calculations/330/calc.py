@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-df=pd.read_excel('after expansion diff coeff.xlsx',skiprows=1)
+df=pd.read_excel('wave dist 330.xlsx',skiprows=1)
 
 locations=['loc 1','loc 2','loc 3','loc 4','loc 5','loc 6','loc 7','loc 10']
 
