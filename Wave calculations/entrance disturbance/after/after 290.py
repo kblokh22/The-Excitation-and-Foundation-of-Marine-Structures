@@ -42,3 +42,4 @@ plt.xlabel('Time [s]')
 plt.ylabel('Diffraction Coefficient [-]')
 plt.savefig(f'stable dist coeff.png',bbox_inches='tight')
 
+print(dist_coeff['entrance'])
