@@ -35,10 +35,10 @@ for loc in locations:
 
 plt.figure()
 for loc in locations:
-    plt.plot(t[idx:len(t)],stable[loc],label=f'{loc}, AVG diffraction coefficient = {np.round(dist_coeff[loc],3)}')
+    plt.plot(t[idx:len(t)],stable[loc],label=f'{loc}')
 plt.legend(prop={'size': 8})
 plt.ylim([0,2*dist_coeff[locations[0]]])
-plt.xlabel('time [s]')
+plt.xlabel('Time [s]')
 plt.ylabel('Diffraction Coefficient [-]')
 plt.savefig(f'stable dist coeff.png',bbox_inches='tight')
 
