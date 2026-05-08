@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 g = 9.82
-B = ["B8 805a ","B14 1423a", "B8 881a ", "B4 430a ", "B8 829a "]
+B = ["B8 805a ","B14 1424a", "B8 881a ", "B4 430a ", "B8 829a "]
 depth = ["22,0 - 22,5 m", "20,0 - 20,5 m", "25,0 - 25,6 m",  "32,0 - 32,6 m", "34,0 - 34,6 m"]
 Test = ["CID","CIU","CID","CID","CID"]
 
@@ -28,7 +28,13 @@ phi_cs = np.arcsin((sigma_1cs-sigma_3cs)/(sigma_1cs+sigma_3cs))
 phi_cs = np.degrees(phi_cs)
 
 alpha_p = phi_p - phi_cs
+sigma_1_50 = np.array([815,1038,381,754,636])
+q_50 = sigma_1_50 - sigma_3p
 
+print(q_50)
+ep_50 = np.array([0.05-0.019,0.05-0.012,0.05-0.027,0.035,0.029])
+
+E_50 = q_50 / ep_50
 
 tau_p = q_p/2
 tau_cs = q_cs/2
@@ -46,20 +52,24 @@ w = np.array([17.4, 9.9, 23.2, 12.2, 12.2 ])
 sigma_pc = 800
 
 OCR = sigma_pc/sigma_i
+phi_pl = phi_p*1.1
 
 df = pd.DataFrame()
 df['Boreholes'] = B
 df ['Depth [m]' ] = depth
-df['phi_tp [°]'] = phi_tp
 df['phi_p [°]'] = phi_p
 df['phi_cs [°]'] = phi_cs
 df['alpha_p [°]'] = alpha_p
+df['phi_pl [°]'] = phi_pl
+
 
 df1 = pd.DataFrame()
 df1['Boreholes'] = B
 df1['OCR [-]'] = OCR
 df1['Void ratio [-]'] = e
 df1['w [%]'] = w
+df1['E_50 [MPa]'] = E_50/1000
+
 
 df2 = pd.DataFrame()
 df2['Boreholes'] = B

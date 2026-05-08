@@ -26,7 +26,7 @@ plt.plot(date,p_excess,color='blue')
 plt.scatter(date,p_excess,color='blue')
 plt.xlabel('Date [Day]')
 plt.ylabel('P_excess [kPa]')
-plt.title('B2: P_excess vs Date')
+plt.title('B4: P_excess vs Date')
 plt.grid(True, alpha=0.3)
 
 
@@ -52,8 +52,34 @@ plt.plot(date,u,color='blue')
 plt.scatter(date,u,color='blue')
 plt.xlabel('Date [Day]')
 plt.ylabel('U [mm]')
-plt.title('B2: U vs Date')
+plt.title('B4: U vs Date')
 plt.grid(True, alpha=0.3)
+
+
+
+m_stage = np.array([0,0.1,0.2,0.38,0.56,0.73,0.9,1])
+u = np.array([0,5,10,20,30,40,50,58])
+
+plt.figure()
+plt.plot(m_stage,u,color='red')
+plt.scatter(m_stage,u,color='red')
+plt.xlabel('M_stage [-]')
+plt.ylabel('U [mm]')
+plt.title('B1: U vs M_stage')
+plt.grid(True, alpha=0.3)
+
+
+m_stage = np.array([0,0.06,0.17,0.39,0.59,0.77,1])
+u = np.array([0,4,13,29,46,63,88])
+
+plt.figure()
+plt.plot(m_stage,u,color='blue')
+plt.scatter(m_stage,u,color='blue')
+plt.xlabel('M_stage [-]')
+plt.ylabel('U [mm]')
+plt.title('B4: U vs M_stage')
+plt.grid(True, alpha=0.3)
+
 
 
 x = np.linspace(0,50,2)
@@ -64,10 +90,14 @@ E = np.array([76.59,54.11])
 plt.figure()
 plt.scatter(x1,E,color='red')
 plt.plot(x,y,color='blue')
-plt.xlabel('E [MPa]')
-plt.ylabel('Depth [mm]')
-plt.title('Interpolation of E')
+plt.ylabel('E [MPa]')
+plt.xlabel('Depth [mm]')
+plt.title('Interpolation of E from oedemeter test')
 plt.grid(True, alpha=0.3)
+
+
+
+
 
 plt.show()
 
