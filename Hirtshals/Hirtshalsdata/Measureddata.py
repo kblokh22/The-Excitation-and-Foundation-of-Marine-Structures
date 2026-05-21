@@ -165,7 +165,7 @@ for i,n,loc in zip(location,range(8),location):
     plt.title(f'Wave heights at {i}')
     plt.xlabel('Time [s]')
     plt.ylabel('Wave height [m]')
-    plt.hlines(y=H1_3[loc]['3rds'],colors='r',linestyles='-',xmin=t[0],xmax=t[-1],label=f'H1/3 = {H1_3[loc]["3rds"]:.2f}')
+    plt.hlines(y=H1_3[loc]['3rds'],colors='r',linestyles='-',xmin=t[0],xmax=t[-1],label=f'Hs = {H1_3[loc]["3rds"]:.2f}')
     plt.scatter(t,results[i]['wave_heights'],label='Wave heights')
     plt.legend(loc='upper left')
     plt.savefig(f'{location[n]} wave periods scatter plot')
